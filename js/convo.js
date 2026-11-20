@@ -30,6 +30,10 @@ function kindOf(i) {
         return { kind: "what", cue: EMOJI[e] };
     return { kind: "teach" };
 }
+/** A picture for a word, where one fits (🐐 for goat, 🍌🍌🍌 for three). */
+export function cueFor(i) {
+    return kindOf(i).cue;
+}
 export const lineOf = (i) => ({ target: i.target, english: i.english, swahili: i.swahili, item: i });
 const withArticle = (en) => {
     const w = head(en);

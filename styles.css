@@ -472,3 +472,13 @@ body.on-home #app { max-width: 1080px; }
 .new-hint { color: var(--orange); }
 /* the story-scene lines still use the simple tappable line */
 button.say-line { font: inherit; font-size: inherit; font-weight: inherit; color: inherit; text-align: left; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
+
+/* ---------- Study card for a new word ---------- */
+.teach { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .7rem; padding: 1.2rem 0 .5rem; }
+.chip-new { background: var(--yellow); color: var(--ink); }
+.teach-cue { font-size: 3.4rem; line-height: 1.1; letter-spacing: .05em; max-width: 100%; word-break: break-all; }
+.teach-word { display: flex; flex-direction: column; align-items: center; gap: .6rem; }
+.teach-word .target-text { font-size: 2.4rem; font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
+.teach-play { display: flex; gap: .5rem; }
+.teach-mean { font-size: 1.25rem; font-weight: 600; color: #4A3B2E; padding: .5rem 1rem; border-top: 2px dashed #D9CDB8; }
+.teach-note { margin: 0; max-width: 28em; font-size: .95rem; color: var(--muted); }

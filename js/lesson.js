@@ -154,6 +154,10 @@ function renderExercise() {
             renderConvo(ex);
             break;
         }
+        case "teach": {
+            renderTeach(ex.item, ex.cue);
+            break;
+        }
         case "scene": {
             const who = (k) => ex.cast.find((c) => c.key === k);
             root.innerHTML = shell(`
@@ -287,6 +291,39 @@ function renderExercise() {
             break;
         }
     }
+    $("#quit").addEventListener("click", confirmQuit);
+}
+// ---------- studying a new word ----------
+function renderTeach(item, cue) {
+    const phrase = item.target.trim().split(/\s+/).length > 1;
+    const canPlay = audio.hasAudio(item, code());
+    app().innerHTML = shell(`
+    <div class="teach">
+      <span class="chip chip-new">${phrase ? t("newPhrase") : t("newWord")}</span>
+      ${cue ? `<div class="teach-cue" aria-hidden="true">${cue}</div>` : ""}
+      <div class="teach-word">
+        <span class="target-text">${esc(item.target)}</span>
+        ${canPlay ? `<div class="teach-play"><button class="speak" id="speak" aria-label="${t("playSound")}">🔊</button><button class="speak speak-slow" id="slow" aria-label="${t("listenSlow")}">🐢</button></div>` : ""}
+      </div>
+      <div class="teach-mean">${esc(meaning(item))}</div>
+      ${item.note ? `<p class="teach-note">💡 ${esc(item.note)}</p>` : ""}
+      ${canPlay ? `<p class="hint">${t("studyHint")}</p>` : ""}
+    </div>
+  `, [item]);
+    const foot = $("#foot");
+    foot.innerHTML = `<button class="btn btn-primary btn-wide" id="got">${t("gotIt")} →</button>`;
+    $("#speak")?.addEventListener("click", () => playItem(item));
+    $("#slow")?.addEventListener("click", () => playItem(item, true));
+    void playItem(item);
+    const next = () => { document.removeEventListener("keydown", onKey); if (!s)
+        return; s.pos++; savePartial(); renderExercise(); };
+    const onKey = (e) => { if (e.key === "Enter") {
+        e.preventDefault();
+        next();
+    } };
+    setTimeout(() => document.addEventListener("keydown", onKey), 50);
+    $("#got").addEventListener("click", next);
+    $("#got").focus();
     $("#quit").addEventListener("click", confirmQuit);
 }
 // ---------- speaking ----------
@@ -817,7 +854,8 @@ function finish() {
         $("#cont").addEventListener("click", sess.onExit);
         return;
     }
-    const accuracy = Math.round((Math.max(0, sess.total - sess.mistakes) / sess.total) * 100);
+    const asked = sess.queue.filter((e) => e.kind !== "teach").length;
+    const accuracy = Math.round((Math.max(0, asked - sess.mistakes) / Math.max(1, asked)) * 100);
     const perfect = sess.mistakes === 0;
     const beads = sess.mode === "lesson" ? 10 + (perfect ? 5 : 0) : 5;
     if (sess.mode === "lesson" && sess.lessonId)

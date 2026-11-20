@@ -58,10 +58,25 @@ export function sceneExercise(scene, cast, find, pool) {
     };
 }
 const listen = (it, pool) => ({ kind: "listen", item: it, options: shuffle([it.target, ...distractors(it, pool, target, 3)]) });
-/** Build the exercise queue for one lesson. `pool` supplies wrong-answer options. */
+/** Build one lesson: STUDY new words (two at a time, each followed by a quick check),
+ *  then mixed QUESTIONS, then the closing CONVERSATION. */
 export function generateLesson(items, pool, opts = {}) {
-    const { story, speak = false, realAudio = () => false } = opts;
-    const intro = items.map((it) => choose(it, pool, "to-base"));
+    const { story, speak = false, realAudio = () => false, isNew = () => true, cue = () => undefined } = opts;
+    // 1. Study: new words are taught before anything asks about them
+    const fresh = items.filter(isNew);
+    const known = items.filter((i) => !isNew(i));
+    const study = [];
+    for (let c = 0; c < fresh.length; c += 2) {
+        const chunk = fresh.slice(c, c + 2);
+        for (const it of chunk)
+            study.push({ kind: "teach", item: it, cue: cue(it) });
+        for (const it of shuffle(chunk))
+            study.push(choose(it, pool, "to-base")); // quick check on what was just taught
+    }
+    // words met in an earlier visit get a quick reminder question instead of a card
+    for (const it of known)
+        study.push(choose(it, pool, "to-base"));
+    // 2. Questions: recall in different ways
     const later = [];
     for (const [i, it] of items.entries()) {
         if (realAudio(it) && i % 2 === 1)
@@ -75,17 +90,16 @@ export function generateLesson(items, pool, opts = {}) {
     }
     const matchItems = uniqueBy(uniqueBy(shuffle(items), meaning), target).slice(0, 4);
     if (matchItems.length >= 3)
-        later.splice(Math.floor(later.length / 2), 0, { kind: "match", items: matchItems });
+        later.push({ kind: "match", items: matchItems });
+    let questions = shuffle(later).slice(0, Math.max(5, 9 - Math.floor(items.length / 2)));
     if (speak) {
-        // Two "say it aloud" turns, favouring short words — easiest for the recogniser
+        // Two "say it aloud" turns, favouring short words, easiest for the recogniser
         const picks = shuffle(items).sort((a, b) => a.target.length - b.target.length).slice(0, 2);
         for (const it of picks)
-            later.splice(Math.floor(Math.random() * (later.length + 1)), 0, { kind: "speak", item: it });
+            questions.splice(1 + Math.floor(Math.random() * questions.length), 0, { kind: "speak", item: it });
     }
-    const queue = [...intro, ...later.length ? shuffle(later) : []].slice(0, story ? 15 : 16);
-    if (story)
-        queue.push(story); // the story scene closes the lesson
-    return queue;
+    // 3. Conversation closes the lesson
+    return [...study, ...questions, ...(story ? [story] : [])];
 }
 /** Unit test: 10 recall questions across the whole unit, no introductions. */
 export function generateTest(items, pool, opts = {}) {

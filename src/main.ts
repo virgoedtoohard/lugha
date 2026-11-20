@@ -1,5 +1,5 @@
 import { bead, bomaIcon, safariIcon, wellIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
-import { learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
+import { cueFor, learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
 import { generateLesson, generatePractice, generateTest, sceneExercise } from "./exercises.js";
@@ -429,7 +429,10 @@ function openLesson(lessonId: string): void {
     mode: "lesson", course, lessonId,
     title: `${u.place} · ${L(lesson.title)}`,
     bead: u.bead,
-    exercises: generateLesson(lesson.items, pool, { story, speak: canSpeakNow(), realAudio: realAudio(course) }),
+    exercises: generateLesson(lesson.items, pool, {
+      story, speak: canSpeakNow(), realAudio: realAudio(course),
+      isNew: (i) => !getProgress().itemStats[i.id], cue: cueFor,
+    }),
     onExit: goSafari,
   });
 }

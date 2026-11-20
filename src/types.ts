@@ -79,6 +79,7 @@ export type Exercise =
   | { kind: "type"; item: Item }
   | { kind: "listen"; item: Item; options: string[] }
   | { kind: "speak"; item: Item }
+  | { kind: "teach"; item: Item; cue?: string }
   | { kind: "scene"; scene: Scene; cast: CastMember[]; lines: { who: string; item: Item }[]; answer: Item; options: string[] }
   | { kind: "convo"; title: { en: string; sw: string }; setting: { en: string; sw: string }; cast: CastMember[]; turns: Turn[]; big: boolean;
       known: string[]; glossary: Record<string, { en: string; sw: string }> };

@@ -38,6 +38,11 @@ function kindOf(i: Item): { kind: "count" | "what" | "teach"; cue?: string } {
   return { kind: "teach" };
 }
 
+/** A picture for a word, where one fits (🐐 for goat, 🍌🍌🍌 for three). */
+export function cueFor(i: Item): string | undefined {
+  return kindOf(i).cue;
+}
+
 export const lineOf = (i: Item): Line => ({ target: i.target, english: i.english, swahili: i.swahili, item: i });
 
 const withArticle = (en: string) => {
