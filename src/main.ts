@@ -4,6 +4,7 @@ import * as cloud from "./cloud.js";
 import { generateLesson, generatePractice, generateTest, sceneExercise } from "./exercises.js";
 import { getLang, L, setLang, t } from "./i18n.js";
 import { startSession } from "./lesson.js";
+import { leaveHome, renderHome } from "./home.js";
 import { renderReview } from "./review.js";
 import * as speech from "./speech.js";
 import {
@@ -24,7 +25,11 @@ function route(): void {
   const p = getProgress();
   setLang(p.base);
   document.body.classList.remove("in-lesson");
+  leaveHome();
+  window.scrollTo(0, 0);
 
+  // New visitors land on the home page; returning learners go straight to their journey
+  if (view === "home" || (!view && !p.activeCourse)) return renderHome(app(), route);
   if (view === "lesson" && arg) return openLesson(arg);
   if (view === "test" && arg) return openTest(arg);
   if (view === "kisima" && arg === "go") return openPractice();
@@ -47,7 +52,10 @@ function topBar(): string {
   const label = c ? (c.family === c.nativeName ? c.nativeName : `${c.nativeName}`) : t("chooseLang");
   return `
   <header class="topbar">
-    <a class="course-pill" href="#/courses">${esc(label)} ▾</a>
+    <div class="top-left">
+      <a class="top-brand" href="#/home" aria-label="Lugha home">${bead("#B8322A", 20)}</a>
+      <a class="course-pill" href="#/courses">${esc(label)} ▾</a>
+    </div>
     <div class="top-stats">
       <span title="${t("fire")}">${hearth(p.streak > 0)} ${p.streak}</span>
       <span title="${t("totalBeads")}">${bead("#B8322A", 18)} ${p.xp}</span>
