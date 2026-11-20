@@ -1,0 +1,12 @@
+{
+  "name": "Lugha — Learn Kenyan languages",
+  "short_name": "Lugha",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF6EC",
+  "theme_color": "#1F5F4A",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
