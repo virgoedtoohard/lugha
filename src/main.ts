@@ -1,5 +1,5 @@
 import { bead, bomaIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
-import { legConvo, miniConvo, stopConvo } from "./convo.js";
+import { learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
 import { generateLesson, generatePractice, generateTest, sceneExercise } from "./exercises.js";
@@ -350,7 +350,7 @@ function renderBoma(root: HTMLElement): void {
     const key = cb.dataset.setting as "speaking" | "voiceFallback";
     setSetting(key, cb.checked);
     if (key === "voiceFallback") audio.setFallback(cb.checked);
-    if (key === "speaking" && cb.checked) setSetting("speakSnoozeUntil", 0);
+    if (key === "speaking" && cb.checked) { setSetting("speakSnoozeUntil", 0); speech.resetRecogniser(); }
   }));
   $<HTMLSelectElement>("#goal").addEventListener("change", (e) => setDailyGoal(+(e.target as HTMLSelectElement).value));
   wireAccount();
@@ -422,7 +422,8 @@ function openLesson(lessonId: string): void {
   const lesson = u?.lessons.find((l) => l.id === lessonId);
   if (!course || !u || !lesson || !isUnlocked(course, lessonId)) { location.hash = "#/safari"; return; }
   document.body.classList.add("in-lesson");
-  const pool = allItems(course);
+  // wrong-answer options come from words already learned (padded only at the very start)
+  const pool = withPadding(course, learnedThrough(course, lesson), 8);
   const story = miniConvo(course, u, lesson);
   startSession({
     mode: "lesson", course, lessonId,

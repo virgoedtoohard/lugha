@@ -446,16 +446,28 @@ body.on-home #app { max-width: 1080px; }
 .bubble.corrected { border-color: var(--red); background: var(--clay-soft); }
 .lesson-foot.slim { padding-top: .8rem; padding-bottom: calc(.8rem + env(safe-area-inset-bottom)); }
 
-/* ---------- Tap a line to hear it ---------- */
-.say-line {
-  font: inherit; font-size: inherit; font-weight: inherit; color: inherit; text-align: left;
-  background: none; border: 0; padding: 0; margin: 0; cursor: pointer;
-  display: inline-flex; align-items: center; gap: .35rem; border-radius: 6px;
+/* ---------- Tap a line to hear it; tap a new word for its meaning ---------- */
+.say-line { display: inline; line-height: 1.5; border-radius: 6px; }
+.say-line.playable { cursor: pointer; }
+.say-line.playable:hover .w:not(.new-word) { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; text-decoration-color: #B49B7C; }
+.new-word {
+  font: inherit; color: inherit; background: #FFF3DF; border: 0; padding: 0 .15em; margin: 0; cursor: help;
+  border-bottom: 2px dotted var(--orange); border-radius: 4px;
 }
-.say-line:hover span { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
-.say-line:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
-.say-ic { flex: none; color: var(--muted); }
+.new-word:focus-visible, .say-btn:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+.say-btn { background: none; border: 0; padding: 0 0 0 .3rem; margin: 0; cursor: pointer; color: var(--muted); vertical-align: middle; display: inline-flex; }
+.say-ic { flex: none; }
+.gloss-pop {
+  display: block; width: fit-content; max-width: 100%; margin: .3rem 0 .1rem; padding: .3rem .6rem;
+  background: var(--ink); color: #fff; border-radius: 10px; font-size: .82rem; font-weight: 600; letter-spacing: 0;
+  animation: pop .2s ease-out;
+}
+.gloss-pop b { color: #F6C343; }
 .bubble.speaking { box-shadow: 0 0 0 4px rgba(36,86,164,.25); }
-.bubble.speaking .say-ic { color: var(--blue); animation: speakPulse .6s ease-in-out infinite alternate; }
+.bubble.speaking .say-btn { color: var(--blue); }
+.bubble.speaking .say-ic { animation: speakPulse .6s ease-in-out infinite alternate; }
 @keyframes speakPulse { to { transform: scale(1.25); } }
 .hear-hint { margin: .3rem 0 0; font-size: .82rem; font-weight: 600; color: var(--muted); }
+.new-hint { color: var(--orange); }
+/* the story-scene lines still use the simple tappable line */
+button.say-line { font: inherit; font-size: inherit; font-weight: inherit; color: inherit; text-align: left; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }

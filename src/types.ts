@@ -49,6 +49,7 @@ export interface Frames {
   whatIs?: Phrase;                   // "What is this?"
   itIs?: { prefix: string; en: string; sw: string };   // "It is ___" → prefix + noun
   howMany?: Phrase;                  // "How many?"
+  glosses?: Record<string, { en: string; sw: string }>;   // meanings of single words used in the phrases above
   thanks?: string;                   // item id
   bye?: string;                      // item id
   greet?: [question: string, answer: string];   // item ids
@@ -79,7 +80,8 @@ export type Exercise =
   | { kind: "listen"; item: Item; options: string[] }
   | { kind: "speak"; item: Item }
   | { kind: "scene"; scene: Scene; cast: CastMember[]; lines: { who: string; item: Item }[]; answer: Item; options: string[] }
-  | { kind: "convo"; title: { en: string; sw: string }; setting: { en: string; sw: string }; cast: CastMember[]; turns: Turn[]; big: boolean };
+  | { kind: "convo"; title: { en: string; sw: string }; setting: { en: string; sw: string }; cast: CastMember[]; turns: Turn[]; big: boolean;
+      known: string[]; glossary: Record<string, { en: string; sw: string }> };
 
 /** One line in a conversation. `item` is either a real lesson item or a composed phrase. */
 export interface Line { target: string; english: string; swahili: string; item?: Item }

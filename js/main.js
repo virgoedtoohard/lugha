@@ -1,5 +1,5 @@
 import { bead, bomaIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
-import { legConvo, miniConvo, stopConvo } from "./convo.js";
+import { learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
 import { generateLesson, generatePractice, generateTest } from "./exercises.js";
@@ -347,8 +347,10 @@ function renderBoma(root) {
         setSetting(key, cb.checked);
         if (key === "voiceFallback")
             audio.setFallback(cb.checked);
-        if (key === "speaking" && cb.checked)
+        if (key === "speaking" && cb.checked) {
             setSetting("speakSnoozeUntil", 0);
+            speech.resetRecogniser();
+        }
     }));
     $("#goal").addEventListener("change", (e) => setDailyGoal(+e.target.value));
     wireAccount();
@@ -429,7 +431,8 @@ function openLesson(lessonId) {
         return;
     }
     document.body.classList.add("in-lesson");
-    const pool = allItems(course);
+    // wrong-answer options come from words already learned (padded only at the very start)
+    const pool = withPadding(course, learnedThrough(course, lesson), 8);
     const story = miniConvo(course, u, lesson);
     startSession({
         mode: "lesson", course, lessonId,

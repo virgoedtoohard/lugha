@@ -141,11 +141,48 @@ function closing(course, who, pool) {
     return out;
 }
 const seenBefore = (course, unit) => course.units.slice(0, course.units.indexOf(unit) + 1).flatMap((u) => u.lessons.flatMap((l) => l.items));
+/** Everything taught up to and including this lesson (lessons unlock in order, so this is what the learner knows). */
+export function learnedThrough(course, lesson) {
+    const out = [];
+    for (const u of course.units)
+        for (const l of u.lessons) {
+            out.push(...l.items);
+            if (l === lesson)
+                return out;
+        }
+    return out;
+}
+/** Wrong-answer options come from learned words; pad from the course only if too few are known yet. */
+export function withPadding(course, learned, min = 6) {
+    if (learned.length >= min)
+        return learned;
+    const extra = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => !learned.includes(i));
+    return [...learned, ...extra.slice(0, min - learned.length)];
+}
+export const wordKey = (w) => w.toLowerCase().replace(/[?!.,;:“”"]/g, "").trim();
+/** Words the learner knows (from learned items) and meanings for the course's single words and phrase words. */
+function vocabulary(course, learned) {
+    var _a;
+    const known = new Set();
+    for (const i of learned)
+        for (const w of i.target.split(/\s+/))
+            known.add(wordKey(w));
+    const glossary = {};
+    for (const i of course.units.flatMap((u) => u.lessons.flatMap((l) => l.items))) {
+        const words = i.target.split(/\s+/);
+        if (words.length === 1)
+            glossary[_a = wordKey(i.target)] ?? (glossary[_a] = { en: i.english, sw: i.swahili });
+    }
+    for (const [w, g] of Object.entries(course.frames.glosses ?? {}))
+        glossary[wordKey(w)] = g;
+    return { known: [...known], glossary };
+}
 /** Short conversation that closes a lesson. */
 export function miniConvo(course, unit, lesson) {
     const theme = themeOf(unit);
     const who = castBy(course, lesson.scene?.lines.find((l) => l.who !== "you")?.who ?? SPEAKER[theme]);
-    const pool = [...lesson.items, ...seenBefore(course, unit)];
+    const learned = learnedThrough(course, lesson);
+    const pool = withPadding(course, learned);
     let turns = sceneTurns(course, lesson, pool);
     const scripted = new Set(lesson.scene?.lines.map((l) => l.item) ?? []);
     const vocab = shuffle(lesson.items.filter((i) => !scripted.has(i.id))).slice(0, lesson.scene ? 1 : 2);
@@ -159,13 +196,15 @@ export function miniConvo(course, unit, lesson) {
         kind: "convo", big: false, cast: course.cast, turns,
         title: tr("Conversation", "Mazungumzo"),
         setting: lesson.scene?.setting ?? setting(theme, who),
+        ...vocabulary(course, learned),
     };
 }
 /** Longer conversation at the end of a stop, using everything from that stop. */
 export function stopConvo(course, unit) {
     const theme = themeOf(unit);
     const who = castBy(course, SPEAKER[theme]);
-    const pool = seenBefore(course, unit);
+    const learned = seenBefore(course, unit);
+    const pool = withPadding(course, learned);
     const unitItems = unit.lessons.flatMap((l) => l.items);
     const turns = [...greetOpen(course, who, pool, true)];
     const scripted = new Set(unit.lessons.flatMap((l) => l.scene?.lines.map((x) => x.item) ?? []));
@@ -180,6 +219,7 @@ export function stopConvo(course, unit) {
         kind: "convo", big: true, cast: course.cast, turns: dedupe(turns),
         title: tr(`Conversation at ${unit.place}`, `Mazungumzo ${unit.place}`),
         setting: setting(theme, who),
+        ...vocabulary(course, learned),
     };
 }
 /** Fireside conversation at the end of a leg: covers every stop so far, more from this leg. */
@@ -208,6 +248,7 @@ export function legConvo(course, legUnits) {
         kind: "convo", big: true, cast: course.cast, turns: dedupe(turns),
         title: tr(`By the fire at ${last.place}`, `Kando ya moto ${last.place}`),
         setting: tr("Tell the story of your journey so far", "Simulia safari yako hadi sasa"),
+        ...vocabulary(course, pool),
     };
 }
 /** A scene built around the course's greeting would repeat the conversation's opening. */

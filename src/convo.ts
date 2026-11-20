@@ -155,11 +155,41 @@ function closing(course: Course, who: CastMember, pool: Item[]): Turn[] {
 
 const seenBefore = (course: Course, unit: Unit) => course.units.slice(0, course.units.indexOf(unit) + 1).flatMap((u) => u.lessons.flatMap((l) => l.items));
 
+/** Everything taught up to and including this lesson (lessons unlock in order, so this is what the learner knows). */
+export function learnedThrough(course: Course, lesson: Lesson): Item[] {
+  const out: Item[] = [];
+  for (const u of course.units) for (const l of u.lessons) { out.push(...l.items); if (l === lesson) return out; }
+  return out;
+}
+
+/** Wrong-answer options come from learned words; pad from the course only if too few are known yet. */
+export function withPadding(course: Course, learned: Item[], min = 6): Item[] {
+  if (learned.length >= min) return learned;
+  const extra = course.units.flatMap((u) => u.lessons.flatMap((l) => l.items)).filter((i) => !learned.includes(i));
+  return [...learned, ...extra.slice(0, min - learned.length)];
+}
+
+export const wordKey = (w: string) => w.toLowerCase().replace(/[?!.,;:“”"]/g, "").trim();
+
+/** Words the learner knows (from learned items) and meanings for the course's single words and phrase words. */
+function vocabulary(course: Course, learned: Item[]): { known: string[]; glossary: Record<string, T> } {
+  const known = new Set<string>();
+  for (const i of learned) for (const w of i.target.split(/\s+/)) known.add(wordKey(w));
+  const glossary: Record<string, T> = {};
+  for (const i of course.units.flatMap((u) => u.lessons.flatMap((l) => l.items))) {
+    const words = i.target.split(/\s+/);
+    if (words.length === 1) glossary[wordKey(i.target)] ??= { en: i.english, sw: i.swahili };
+  }
+  for (const [w, g] of Object.entries(course.frames.glosses ?? {})) glossary[wordKey(w)] = g;
+  return { known: [...known], glossary };
+}
+
 /** Short conversation that closes a lesson. */
 export function miniConvo(course: Course, unit: Unit, lesson: Lesson): Exercise {
   const theme = themeOf(unit);
   const who = castBy(course, lesson.scene?.lines.find((l) => l.who !== "you")?.who ?? SPEAKER[theme]);
-  const pool = [...lesson.items, ...seenBefore(course, unit)];
+  const learned = learnedThrough(course, lesson);
+  const pool = withPadding(course, learned);
   let turns: Turn[] = sceneTurns(course, lesson, pool);
   const scripted = new Set(lesson.scene?.lines.map((l) => l.item) ?? []);
   const vocab = shuffle(lesson.items.filter((i) => !scripted.has(i.id))).slice(0, lesson.scene ? 1 : 2);
@@ -170,6 +200,7 @@ export function miniConvo(course: Course, unit: Unit, lesson: Lesson): Exercise 
     kind: "convo", big: false, cast: course.cast, turns,
     title: tr("Conversation", "Mazungumzo"),
     setting: lesson.scene?.setting ?? setting(theme, who),
+    ...vocabulary(course, learned),
   };
 }
 
@@ -177,7 +208,8 @@ export function miniConvo(course: Course, unit: Unit, lesson: Lesson): Exercise 
 export function stopConvo(course: Course, unit: Unit): Exercise {
   const theme = themeOf(unit);
   const who = castBy(course, SPEAKER[theme]);
-  const pool = seenBefore(course, unit);
+  const learned = seenBefore(course, unit);
+  const pool = withPadding(course, learned);
   const unitItems = unit.lessons.flatMap((l) => l.items);
   const turns: Turn[] = [...greetOpen(course, who, pool, true)];
   const scripted = new Set(unit.lessons.flatMap((l) => l.scene?.lines.map((x) => x.item) ?? []));
@@ -189,6 +221,7 @@ export function stopConvo(course: Course, unit: Unit): Exercise {
     kind: "convo", big: true, cast: course.cast, turns: dedupe(turns),
     title: tr(`Conversation at ${unit.place}`, `Mazungumzo ${unit.place}`),
     setting: setting(theme, who),
+    ...vocabulary(course, learned),
   };
 }
 
@@ -216,6 +249,7 @@ export function legConvo(course: Course, legUnits: Unit[]): Exercise {
     kind: "convo", big: true, cast: course.cast, turns: dedupe(turns),
     title: tr(`By the fire at ${last.place}`, `Kando ya moto ${last.place}`),
     setting: tr("Tell the story of your journey so far", "Simulia safari yako hadi sasa"),
+    ...vocabulary(course, pool),
   };
 }
 

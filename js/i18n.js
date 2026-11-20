@@ -53,7 +53,12 @@ const STR = {
         listenSlow: "Play slowly", playSound: "Play sound",
         talkDone: "Conversation complete!", talkNode: "Conversation", legNode: "By the fire", youAreHere: "You are here",
         talkLocked: "Finish this stop's lessons first",
-        tapToHear: "Tap any line to hear it", noVoice: "To hear the lines, add a Kiswahili voice to your phone (Settings › Text-to-speech) or open Lugha in Microsoft Edge.",
+        tapToHear: "Tap any line to hear it", tapNewWord: "Dotted words are new: tap one to see what it means.",
+        srNetwork: "Speech checking needs an internet connection. Try again when you're online.",
+        srNoMic: "We couldn't find a microphone on this device.",
+        srUnavailable: "Your phone can't check speech here, so you'll record yourself and compare instead.",
+        srFailed: "Something went wrong with the microphone ({e}). Try again.",
+        partOf: "part of “{p}”", noVoice: "To hear the lines, add a Kiswahili voice to your phone (Settings › Text-to-speech) or open Lugha in Microsoft Edge.",
     },
     sw: {
         safari: "Safari", kisima: "Kisima", boma: "Boma", review: "Kagua",
@@ -109,7 +114,12 @@ const STR = {
         listenSlow: "Cheza polepole", playSound: "Cheza sauti",
         talkDone: "Mazungumzo yamekamilika!", talkNode: "Mazungumzo", legNode: "Kando ya moto", youAreHere: "Uko hapa",
         talkLocked: "Maliza masomo ya kituo hiki kwanza",
-        tapToHear: "Gusa mstari wowote uusikie", noVoice: "Ili kusikia mistari, weka sauti ya Kiswahili kwenye simu yako (Mipangilio › Maandishi-kwa-sauti) au fungua Lugha kwenye Microsoft Edge.",
+        tapToHear: "Gusa mstari wowote uusikie", tapNewWord: "Maneno yenye nukta ni mapya: gusa moja uone maana yake.",
+        srNetwork: "Kukagua sauti kunahitaji mtandao. Jaribu tena ukiwa mtandaoni.",
+        srNoMic: "Hatukupata kipaza sauti kwenye kifaa hiki.",
+        srUnavailable: "Simu yako haiwezi kukagua sauti hapa, kwa hivyo utajirekodi na kulinganisha badala yake.",
+        srFailed: "Kuna tatizo na kipaza sauti ({e}). Jaribu tena.",
+        partOf: "sehemu ya “{p}”", noVoice: "Ili kusikia mistari, weka sauti ya Kiswahili kwenye simu yako (Mipangilio › Maandishi-kwa-sauti) au fungua Lugha kwenye Microsoft Edge.",
     },
 };
 let lang = "en";

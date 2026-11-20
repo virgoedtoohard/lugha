@@ -7,33 +7,86 @@ function Recognizer() {
     const w = window;
     return w.SpeechRecognition || w.webkitSpeechRecognition;
 }
-export const canRecognize = () => !!Recognizer();
+// Phones fail in ways desktops don't: an iPhone home-screen app may refuse recognition outright,
+// and some Android phones have no Kiswahili recogniser. Once a phone has refused for a reason
+// that won't change, remember it and use record-and-compare instead.
+const BROKEN_KEY = "lugha.recogniser";
+const HARD = new Set(["service-not-allowed", "language-not-supported", "unsupported"]);
+function brokenReason() {
+    try {
+        return localStorage.getItem(BROKEN_KEY);
+    }
+    catch {
+        return null;
+    }
+}
+export function markBroken(reason) {
+    try {
+        localStorage.setItem(BROKEN_KEY, reason);
+    }
+    catch { /* ignore */ }
+}
+export function resetRecogniser() {
+    try {
+        localStorage.removeItem(BROKEN_KEY);
+    }
+    catch { /* ignore */ }
+}
+export const canRecognize = () => !!Recognizer() && !brokenReason();
 export const canRecord = () => typeof navigator.mediaDevices?.getUserMedia === "function" && "MediaRecorder" in window;
-/** Listen once; resolves with the recogniser's guesses (best first). */
+export const isHardError = (code) => HARD.has(code);
+/** Recogniser languages to try, best first. */
+const LANGS = ["sw-KE", "sw-TZ", "sw"];
+/** Listen once; resolves with the recogniser's guesses (best first). Rejects with the error code. */
 export function listen(timeoutMs = 7000) {
     const R = Recognizer();
     if (!R)
         return { done: Promise.reject(new Error("unsupported")), stop: () => { } };
-    const r = new R();
-    r.lang = "sw-KE";
-    r.interimResults = false;
-    r.maxAlternatives = 5;
-    r.continuous = false;
-    let heard = [];
-    const done = new Promise((resolve, reject) => {
-        const timer = setTimeout(() => r.stop(), timeoutMs);
+    let active = null;
+    const attempt = (langIndex) => new Promise((resolve, reject) => {
+        const r = new R();
+        active = r;
+        r.lang = LANGS[langIndex];
+        r.interimResults = false;
+        r.maxAlternatives = 5;
+        r.continuous = false;
+        let heard = [];
+        let settled = false;
+        const finish = (fn) => { if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            fn();
+        } };
+        const timer = setTimeout(() => { try {
+            r.stop();
+        }
+        catch { /* ignore */ } }, timeoutMs);
         r.onresult = (e) => {
-            const res = e.results[0];
+            // some phones deliver several result events; take the last final one
+            const res = e.results[e.results.length - 1] ?? e.results[0];
             heard = Array.from({ length: res.length }, (_, i) => String(res[i].transcript));
         };
-        r.onerror = (e) => { clearTimeout(timer); if (e.error === "no-speech")
-            resolve([]);
-        else
-            reject(new Error(e.error)); };
-        r.onend = () => { clearTimeout(timer); resolve(heard); };
+        r.onerror = (e) => finish(() => {
+            const code = String(e.error || "error");
+            if (code === "no-speech" || code === "aborted")
+                resolve([]);
+            else if (code === "language-not-supported" && langIndex + 1 < LANGS.length)
+                attempt(langIndex + 1).then(resolve, reject);
+            else
+                reject(new Error(code));
+        });
+        r.onend = () => finish(() => resolve(heard));
+        try {
+            r.start();
+        }
+        catch (err) {
+            finish(() => reject(new Error("start-failed")));
+        }
     });
-    r.start();
-    return { done, stop: () => r.stop() };
+    return { done: attempt(0), stop: () => { try {
+            active?.stop();
+        }
+        catch { /* ignore */ } } };
 }
 /** Record from the microphone until stop() is called. */
 export async function record() {

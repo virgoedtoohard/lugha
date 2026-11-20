@@ -83,7 +83,8 @@ const S = {
 // ───────────────────────── Gĩkũyũ ─────────────────────────
 const kikuyu = {
     code: "kik", guide: "kik",
-    frames: { whatIs: { target: "Kĩu nĩ kĩĩ?", english: "What is that?", swahili: "Hicho ni nini?", confidence: "medium" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ ciigana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "kik-u1-l1-4", bye: "kik-u1-l2-5", greet: ["kik-u1-l1-1", "kik-u1-l1-2"] },
+    frames: { whatIs: { target: "Kĩu nĩ kĩĩ?", english: "What is that?", swahili: "Hicho ni nini?", confidence: "medium" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ ciigana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "kik-u1-l1-4", bye: "kik-u1-l2-5", greet: ["kik-u1-l1-1", "kik-u1-l1-2"],
+        glosses: { "kĩu": { en: "that", sw: "hicho" }, "nĩ": { en: "is / it is", sw: "ni" }, "kĩĩ": { en: "what", sw: "nini" }, "ciigana": { en: "how many", sw: "ngapi" } } },
     family: "Gĩkũyũ", name: "Kikuyu", nativeName: "Gĩkũyũ",
     speakers: "Central Kenya — Nyeri, Murang'a, Kiambu, Kirinyaga, Nyandarua",
     dialectNote: "Uses general Gĩkũyũ spelling with tilde vowels (ĩ, ũ).",
@@ -185,7 +186,8 @@ const kikuyu = {
 // ───────────────────────── Dholuo ─────────────────────────
 const luo = {
     code: "luo", guide: "luo",
-    frames: { whatIs: { target: "Mano en ang'o?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "medium" }, itIs: { prefix: "En ", en: "It's ", sw: "Ni " }, howMany: { target: "Gin adi?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "luo-u1-l1-4", bye: "luo-u1-l2-5", greet: ["luo-u1-l1-2", "luo-u1-l1-3"] },
+    frames: { whatIs: { target: "Mano en ang'o?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "medium" }, itIs: { prefix: "En ", en: "It's ", sw: "Ni " }, howMany: { target: "Gin adi?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "luo-u1-l1-4", bye: "luo-u1-l2-5", greet: ["luo-u1-l1-2", "luo-u1-l1-3"],
+        glosses: { "mano": { en: "this", sw: "hiki" }, "en": { en: "is / it is", sw: "ni" }, "ang'o": { en: "what", sw: "nini" }, "gin": { en: "they are", sw: "ni" }, "adi": { en: "how many", sw: "ngapi" } } },
     family: "Dholuo", name: "Luo", nativeName: "Dholuo",
     speakers: "Around Lake Victoria — Kisumu, Siaya, Homa Bay, Migori",
     dialectNote: "Dholuo is tonal; written forms here don't mark tone, so native audio matters a lot.",
@@ -287,7 +289,8 @@ const luo = {
 // ───────────────────────── Kĩkamba ─────────────────────────
 const kamba = {
     code: "kam", guide: "kam",
-    frames: { whatIs: { target: "Kĩĩ nĩ kyaũ?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "low" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ syĩana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "low" }, thanks: "kam-u1-l1-5", greet: ["kam-u1-l1-3", "kam-u1-l1-4"] },
+    frames: { whatIs: { target: "Kĩĩ nĩ kyaũ?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "low" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ syĩana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "low" }, thanks: "kam-u1-l1-5", greet: ["kam-u1-l1-3", "kam-u1-l1-4"],
+        glosses: { "nĩ": { en: "is / it is", sw: "ni" } } },
     family: "Kĩkamba", name: "Kamba", nativeName: "Kĩkamba",
     speakers: "Eastern Kenya — Machakos, Makueni, Kitui",
     dialectNote: "Uses common Machakos-area spelling.",

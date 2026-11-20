@@ -27,6 +27,31 @@ function lineButton(text, canPlay) {
         ? `<button class="say-line target-text" aria-label="${esc(t("playSound"))}: ${esc(text)}"><span>${esc(text)}</span><svg class="say-ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>`
         : `<span class="target-text bubble-line">${esc(text)}</span>`;
 }
+/** A conversation line: tap the line to hear it; words not learned yet are dotted, tap one for its meaning. */
+function convoLine(l, canPlay, known, glossary) {
+    const words = l.target.split(/\s+/).map((w) => {
+        const k = convoWordKey(w);
+        if (!k || known.has(k))
+            return `<span class="w">${esc(w)}</span>`;
+        const g = glossary[k];
+        const meaning = g ? L(g) : t("partOf", { p: lineMeaning(l) });
+        return `<button class="w new-word" data-gloss="${esc(meaning)}" aria-label="${esc(w)}: ${esc(meaning)}">${esc(w)}</button>`;
+    }).join(" ");
+    const icon = `<svg class="say-ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+    return `<span class="say-line target-text${canPlay ? " playable" : ""}">${words}${canPlay ? `<button class="say-btn" aria-label="${esc(t("playSound"))}: ${esc(l.target)}">${icon}</button>` : ""}</span>`;
+}
+const convoWordKey = (w) => w.toLowerCase().replace(/[?!.,;:“”"]/g, "").trim();
+function showGloss(btn) {
+    document.querySelectorAll(".gloss-pop").forEach((g) => g.remove());
+    const pop = document.createElement("span");
+    pop.className = "gloss-pop";
+    pop.setAttribute("role", "status");
+    pop.innerHTML = `<b>${esc(btn.textContent ?? "")}</b> · ${esc(btn.dataset.gloss ?? "")}`;
+    // show it under the line, so the sentence itself doesn't reflow
+    const line = btn.closest(".say-line");
+    (line ?? btn).after(pop);
+    setTimeout(() => pop.remove(), 4000);
+}
 async function speakIn(el, item, text, voice) {
     document.querySelectorAll(".bubble.speaking").forEach((b) => b.classList.remove("speaking"));
     const bubbleEl = el?.closest(".bubble");
@@ -265,6 +290,21 @@ function renderExercise() {
     $("#quit").addEventListener("click", confirmQuit);
 }
 // ---------- speaking ----------
+/** Turn a recogniser error into a plain message; remember phones that can't recognise speech at all. */
+function micMessage(err) {
+    const code = err?.message ?? "error";
+    if (code === "not-allowed")
+        return { text: t("micBlocked"), hard: false };
+    if (code === "network")
+        return { text: t("srNetwork"), hard: false };
+    if (code === "audio-capture")
+        return { text: t("srNoMic"), hard: false };
+    if (speech.isHardError(code) || code === "start-failed") {
+        speech.markBroken(code);
+        return { text: t("srUnavailable"), hard: true };
+    }
+    return { text: t("srFailed", { e: code }), hard: false };
+}
 function micButton(label) {
     return `<button class="mic" id="mic" aria-label="${esc(label)}"><svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>`;
 }
@@ -328,8 +368,14 @@ function renderSpeak(item) {
             }
             catch (e) {
                 mic.classList.remove("live");
-                status.textContent = e.message === "not-allowed" ? t("micBlocked") : t("heardNothing");
-                showSelfCheck(item, false);
+                const m = micMessage(e);
+                status.textContent = m.text;
+                // this phone can't check speech: switch this turn to record-and-compare
+                if (m.hard && speech.canRecord())
+                    setTimeout(() => { if (s?.queue[s.pos]?.kind === "speak")
+                        renderSpeak(item); }, 1800);
+                else
+                    showSelfCheck(item, false);
             }
         });
     }
@@ -417,7 +463,12 @@ function offerSpokenAnswer(expected) {
             }
             catch (e) {
                 mic.classList.remove("live");
-                $("#sp-status").textContent = e.message === "not-allowed" ? t("micBlocked") : t("heardNothing");
+                const m = micMessage(e);
+                $("#sp-status").textContent = m.text;
+                if (m.hard) {
+                    btn.hidden = true;
+                    setTimeout(() => { box.hidden = true; }, 2500);
+                }
             }
         };
         mic.addEventListener("click", () => { if (!mic.classList.contains("live"))
@@ -441,6 +492,13 @@ function refreshThread() {
 function playLine(l, voice = YOU, el) {
     return speakIn(el ?? null, l.item, l.target, voice);
 }
+function hasNewWords(ex) {
+    const known = new Set(ex.known);
+    return ex.turns.some((x) => {
+        const l = x.type === "say" ? x.line : x.type === "reply" ? x.answer : null;
+        return !!l && l.target.split(/\s+/).some((w) => convoWordKey(w) && !known.has(convoWordKey(w)));
+    });
+}
 function renderConvo(ex) {
     const who = (k) => ex.cast.find((c) => c.key === k);
     const replies = ex.turns.filter((x) => x.type === "reply").length;
@@ -448,7 +506,7 @@ function renderConvo(ex) {
     const lineItems = ex.turns.flatMap((x) => x.type === "say" ? (x.line.item ? [x.line.item] : []) : x.type === "reply" && x.answer.item ? [x.answer.item] : []);
     app().innerHTML = shell(`
     <div class="scene-tag">${ex.big ? "🔥" : "💬"} ${esc(L(ex.title))} · ${esc(L(ex.setting))}</div>
-    <p class="hear-hint">${lineItems.some((i) => audio.hasAudio(i, code())) || audio.hasAudio(undefined, code()) ? `🔈 ${t("tapToHear")}` : t("noVoice")}</p>
+    <p class="hear-hint">${lineItems.some((i) => audio.hasAudio(i, code())) || audio.hasAudio(undefined, code()) ? `🔈 ${t("tapToHear")}` : t("noVoice")}${hasNewWords(ex) ? ` · <span class="new-hint">${t("tapNewWord")}</span>` : ""}</p>
     <div class="chat convo" id="chat"></div>
     <div id="reply"></div>
   `, lineItems);
@@ -464,9 +522,20 @@ function renderConvo(ex) {
         row.scrollIntoView({ behavior: "smooth", block: "nearest" });
         return row;
     };
-    const sayHtml = (l) => `${lineButton(l.target, audio.hasAudio(l.item, code()))}<button class="peek">${esc(lineMeaning(l))}</button>`;
+    const known = new Set(ex.known);
+    const sayHtml = (l) => `${convoLine(l, audio.hasAudio(l.item, code()), known, ex.glossary)}<button class="peek">${esc(lineMeaning(l))}</button>`;
     const wire = (row, l, voice) => {
-        row.querySelector(".say-line")?.addEventListener("click", () => playLine(l, voice, row));
+        const line = row.querySelector(".say-line");
+        line?.addEventListener("click", (e) => {
+            const nw = e.target.closest(".new-word");
+            if (nw) {
+                e.stopPropagation();
+                showGloss(nw);
+                return;
+            }
+            if (line.classList.contains("playable"))
+                void playLine(l, voice, row);
+        });
         row.querySelector(".peek")?.addEventListener("click", (e) => e.currentTarget.classList.toggle("shown"));
     };
     const next = async () => {
@@ -581,7 +650,10 @@ function renderConvo(ex) {
                     st.textContent = `${t("weHeard", { h: best.heard })} · ${t("tryAgain")}`;
             }
             catch (e) {
-                st.textContent = e.message === "not-allowed" ? t("micBlocked") : t("heardNothing");
+                const m = micMessage(e);
+                st.textContent = m.text;
+                if (m.hard)
+                    $("#convo-mic")?.setAttribute("hidden", "");
             }
         });
     };
