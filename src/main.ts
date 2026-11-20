@@ -56,7 +56,7 @@ function topBar(): string {
   return `
   <header class="topbar">
     <div class="top-left">
-      <a class="top-brand" href="#/home" aria-label="${getLang() === "sw" ? "Nyumbani" : "Home"}" title="${getLang() === "sw" ? "Nyumbani" : "Home"}">${hutIcon(32)}</a>
+      <a class="top-brand" href="#/home" aria-label="${getLang() === "sw" ? "Nyumbani" : "Home"}" title="${getLang() === "sw" ? "Nyumbani" : "Home"}">${hutIcon(38, "#F4EBDD")}</a>
       <a class="course-pill" href="#/courses">${esc(label)} ▾</a>
     </div>
     <div class="top-stats">
