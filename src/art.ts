@@ -315,3 +315,8 @@ export const chatIcon = () => ico(`<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.
 export const fireIcon = () => ico(`<path d="M12 2.5c1.6 4 6 5.6 6 10.7a6 6 0 0 1-12 0c0-2.6 1.6-4.2 2.5-5 0 2.4.8 3.4 1.8 3.4 0-3.3-.8-6 1.7-9.1z" fill="#F6C343" stroke="#2B1D14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11c.9 2.4 3 3.2 3 5.3a3 3 0 0 1-6 0c0-1.4.9-2.3 1.4-2.8.2 1.1.7 1.6 1.2 1.6 0-1.6-.5-2.6.4-4.1z" fill="#E8742B"/>`, 32);
 export const flagIcon = () => ico(`<path d="M6 21V3.5" stroke="#2B1D14" stroke-width="2" stroke-linecap="round"/><path d="M6.5 4h12l-2.5 4 2.5 4h-12z" fill="#fff" stroke="#2B1D14" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 4v8M12 4v8M15 4v8" stroke="#2B1D14" stroke-width="1.2" stroke-dasharray="2 2"/>`, 24);
 export const pinIcon = () => `<svg width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M11 27s9-9.4 9-16A9 9 0 0 0 2 11c0 6.6 9 16 9 16z" fill="#B8322A" stroke="#FDF4E3" stroke-width="1.6"/><circle cx="11" cy="11" r="3.4" fill="#FDF4E3"/></svg>`;
+
+/** The Lugha logo: a red bead that is also a speech bubble. */
+export function logoMark(size = 28): string {
+  return `<svg class="ic logo-mark" width="${size}" height="${size}" viewBox="0 0 120 120" aria-hidden="true"><path d="M60 16a40 40 0 1 1-21.6 73.6L18 102l7.4-22.8A40 40 0 0 1 60 16z" fill="#B8322A"/><circle cx="45" cy="40" r="10" fill="#FFFFFF" opacity=".42"/></svg>`;
+}

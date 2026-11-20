@@ -1,6 +1,6 @@
 // Landing page: what Lugha is, the languages, how learning works, and a clear way in.
 
-import { bead, boma, calabash, hearth, necklace } from "./art.js";
+import { bead, boma, calabash, hearth, logoMark, necklace } from "./art.js";
 import * as audio from "./audio.js";
 import { getLang, setLang } from "./i18n.js";
 import { allItems, courseCompletion, getCourse, getCourses, getProgress, setBase } from "./store.js";
@@ -102,7 +102,7 @@ export function renderHome(root: HTMLElement, rerender: () => void): void {
   root.innerHTML = `
   <div class="home">
     <header class="home-nav">
-      <a class="brand" href="#/home">${bead("#B8322A", 22)}<span>lugha</span></a>
+      <a class="brand" href="#/home" aria-label="Lugha home">${logoMark(30)}<span>lugha</span></a>
       <div class="home-nav-right">
         <div class="seg mini" role="group" aria-label="${X(COPY.learnUsing)}">
           <button class="${p.base === "en" ? "on" : ""}" data-base="en">EN</button>
