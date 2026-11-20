@@ -39,6 +39,7 @@ MODELS = {
     "kam": ["facebook/mms-tts-kam"],
     "luy": ["facebook/mms-tts-luy", "facebook/mms-tts-bxk", "facebook/mms-tts-lri"],
     "luy-bxk": ["facebook/mms-tts-bxk"],
+    "luy-wan": ["facebook/mms-tts-lwg", "facebook/mms-tts-bxk"],
     "luy-rag": ["facebook/mms-tts-rag", "facebook/mms-tts-lri"],
     "luy-nyd": ["facebook/mms-tts-nyd"],
     "kln": ["facebook/mms-tts-kln", "facebook/mms-tts-sgc", "facebook/mms-tts-niq"],

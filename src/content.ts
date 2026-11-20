@@ -12,6 +12,8 @@
 //  - Luo greetings/numbers: Wikivoyage Luo phrasebook
 //  - Kalenjin "Kitachin", "Ata?": Omniglot Tugen phrases
 //  - Nyore words: Wikipedia Luhya comparative table
+//  - Wanga (Oluwanga): Anangwe & Marlo, Luwanga–English Dictionary, draft of 2008
+//    (re-translation of Appleby's 1943 Luhya–English Vocabulary, recorded by a native speaker)
 
 import type { CastMember, Confidence, Course, Lesson, Scene, Unit } from "./types.js";
 
@@ -538,13 +540,13 @@ const luhyaGeneral: Course = {
     unit("luy-u3", U.home, "Busia", GREEN, [
       lesson("luy-u3-l1", U.everyday, [
         ["omundu", "person", "mtu", "medium"], ["omwana", "child", "mtoto", "medium"],
-        ["eng'ombe", "cow", "ng'ombe", "medium"], ["inzu", "house", "nyumba", "low", "Varies strongly by dialect."],
-        ["amatsi", "water", "maji", "low", "Varies strongly by dialect."],
+        ["eng'ombe", "cow", "ng'ombe", "medium"], ["inzu", "house", "nyumba", "medium", "Wanga form; varies by dialect."],
+        ["amatsi", "water", "maji", "medium", "Wanga form; varies by dialect."],
       ]),
     ]),
     unit("luy-u4", U.market, "Mumias", YELLOW, [
       lesson("luy-u4-l1", U.food, [
-        ["obusuma", "ugali", "ugali", "high"], ["amabere", "milk", "maziwa", "medium"],
+        ["obusuma", "ugali", "ugali", "high"], ["amabeere", "milk", "maziwa", "medium", "In Wanga, 'amabere' with a short vowel means millet."],
         ["enyama", "meat", "nyama", "medium"], ["tsisendi", "money", "pesa", "low", "Varies by dialect."],
       ]),
     ]),
@@ -651,4 +653,89 @@ const nyore: Course = {
   ],
 };
 
-export const COURSES: Course[] = [kikuyu, luo, luhyaGeneral, bukusu, maragoli, nyore, kamba, kalenjinGeneral, kipsigis, nandi];
+
+const wanga: Course = {
+  code: "luy-wan", guide: "luy",
+  frames: { thanks: "luy-wan-u1-l1-4", bye: "luy-wan-u1-l2-1", greet: ["luy-wan-u1-l1-1", "luy-wan-u1-l1-1"] },
+  family: "Luhya", name: "Wanga", nativeName: "Oluwanga",
+  speakers: "Mumias and Matungu, Kakamega County",
+  dialectNote: "Words from the Luwanga–English Dictionary by Alfred Anangwe and Michael Marlo (UCLA, 2008 draft), recorded by a native speaker. Its spelling doesn't mark tone or long vowels.",
+  cast: cast(["Kukhu Nafula", "👵🏾"], "Wanyama", "Mama Atsieno", "Shikuku"),
+  units: [
+    unit("luy-wan-u1", U.greet, "Mumias", RED, [
+      lesson("luy-wan-u1-l1", U.hello, [
+        ["Mulembe", "Hello (peace)", "Salamu (amani)", "high", "The usual greeting. Literally 'peace'."],
+        ["Bushere!", "Good morning!", "Habari ya asubuhi!", "high"],
+        ["Bwirire!", "Good evening!", "Habari ya jioni!", "high"],
+        ["Oryo", "Thank you", "Asante", "high"],
+      ], scene(S.visitElder, ["elder", "luy-wan-u1-l1-2"], ["you", "luy-wan-u1-l1-2"])),
+      lesson("luy-wan-u1-l2", tr("Asking after people", "Kuuliza hali"), [
+        ["Olindwe", "Goodbye", "Kwaheri", "high", "Literally 'may you be kept'. To several people: Mulindwe."],
+        ["Obewo", "Bye for now", "Tutaonana", "high", "Literally 'may you be there'."],
+        ["Basunga shina?", "How are they? (your family)", "Hawajambo?", "high"],
+        ["Tawe", "No / nothing", "Hapana / hakuna", "high", "Also the reply to 'Basunga shina?': nothing is wrong."],
+      ], scene(S.visitElder, ["elder", "luy-wan-u1-l2-3"], ["you", "luy-wan-u1-l2-4"])),
+    ]),
+    unit("luy-wan-u2", U.numbers, "Matungu", BLUE,
+      numbers("luy-wan-u2", ["ndala", "tsibiri", "tsitaru", "tsine", "tsirano", "tsirano na ndala", "musafu", "munane", "shenda", "ikhumi"], "high",
+        { 5: "Literally 'five and one'. Not listed in the dictionary; built the way it gives nine ('five and four').", 6: "'Saba' (from Kiswahili) is also common.", 8: "'Tisa' is also common.", 9: "'Ikhumi na ndala' is eleven." })),
+    unit("luy-wan-u3", U.home, "Shianda", GREEN, [
+      lesson("luy-wan-u3-l1", U.aroundHome, [
+        ["amatsi", "water", "maji", "high"], ["ebilibwa", "food", "chakula", "high"],
+        ["inzu", "house", "nyumba", "high"], ["ing'ombe", "cow", "ng'ombe", "high"],
+        ["imbusi", "goat", "mbuzi", "high"], ["ingokho", "chicken", "kuku", "high"],
+      ]),
+      lesson("luy-wan-u3-l2", U.people, [
+        ["omundu", "person", "mtu", "high"], ["omwana", "child", "mtoto", "high"],
+        ["mama", "mother", "mama", "high"], ["papa", "father", "baba", "high"],
+        ["kukhu", "grandmother", "bibi", "high"], ["kuka", "grandfather", "babu", "high"],
+      ]),
+    ]),
+    unit("luy-wan-u4", U.market, "Ekero", YELLOW, [
+      lesson("luy-wan-u4-l1", U.food, [
+        ["obusuma", "ugali", "ugali", "high", "Stiff porridge of maize or millet flour."],
+        ["amabeere", "milk", "maziwa", "high", "Careful: 'amabere' with a short vowel means millet."],
+        ["inyama", "meat", "nyama", "high"], ["amatuma", "maize", "mahindi", "high"],
+        ["inyeni", "fish", "samaki", "high"], ["amakanda", "beans", "maharagwe", "high"],
+      ]),
+      lesson("luy-wan-u4-l2", tr("At the market", "Sokoni"), [
+        ["eshiiro", "market", "soko", "high"], ["amapesa", "money", "pesa", "high"],
+        ["omulina", "friend", "rafiki", "high"], ["omukhulundu", "elder", "mzee", "high"],
+      ]),
+    ]),
+    unit("luy-wan-u5", U.family, "Khalaba", PURPLE, [
+      lesson("luy-wan-u5-l1", U.menWomen, [
+        ["omusatsa", "man", "mwanamume", "high"],
+        ["omukhasi", "woman / wife", "mwanamke / mke", "high", "Used of a married woman."],
+        ["omusiani", "boy / son", "mvulana / mwana", "high"],
+        ["omukhana", "girl / daughter", "msichana / binti", "high"],
+      ]),
+    ]),
+    unit("luy-wan-u6", U.nature, "Bulimbo", TEAL, [
+      lesson("luy-wan-u6-l1", U.animals, [
+        ["imbwa", "dog", "mbwa", "high"], ["lipaka", "cat", "paka", "high"],
+        ["inzofu", "elephant", "tembo", "high"], ["italanyi", "lion", "simba", "high"],
+        ["liyoni", "bird", "ndege", "high"], ["likondi", "sheep", "kondoo", "high"],
+      ]),
+      lesson("luy-wan-u6-l2", U.land, [
+        ["ifula", "rain", "mvua", "high"], ["eliuba", "sun", "jua", "high"],
+        ["omuliro", "fire", "moto", "high"], ["omuchera", "river", "mto", "high"],
+        ["eshikulu", "hill", "kilima", "high"],
+      ]),
+      lesson("luy-wan-u6-l3", U.time, [
+        ["lero", "today", "leo", "high"], ["mukamba", "tomorrow / morning", "kesho / asubuhi", "high"],
+        ["olwabere", "yesterday", "jana", "high"],
+      ]),
+    ]),
+    unit("luy-wan-u7", U.body, "Lureko", BLACK, [
+      lesson("luy-wan-u7-l1", U.bodyParts, [
+        ["omurwe", "head", "kichwa", "high"], ["imoni", "eye", "jicho", "high"],
+        ["omunwa", "mouth", "mdomo", "high"], ["omukhono", "hand / arm", "mkono", "high"],
+        ["eshilemje", "leg / foot", "mguu", "high"], ["eshirwi", "ear", "sikio", "high"],
+        ["amolu", "nose", "pua", "high"],
+      ]),
+    ]),
+  ],
+};
+
+export const COURSES: Course[] = [kikuyu, luo, luhyaGeneral, bukusu, maragoli, wanga, nyore, kamba, kalenjinGeneral, kipsigis, nandi];

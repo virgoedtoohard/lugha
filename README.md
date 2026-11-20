@@ -29,7 +29,9 @@ A phone-first web app for learning Gĩkũyũ, Dholuo, Luhya, Kĩkamba and Kalenj
 
 How speech checking works: no speech recogniser exists yet for these languages, so the app listens with the Kiswahili (Kenya) recogniser in Chrome, Edge and Android, and compares what it heard with the expected word. Matching is forgiving (it ignores accent marks and long vowels), and learners can always tap "I said it right". Speaking works best in Chrome on Android.
 
-**Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Nyore) and Kalenjin (General, Kipsigis, Nandi).
+**Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Wanga, Nyore) and Kalenjin (General, Kipsigis, Nandi).
+
+**Sources worth giving reviewers:** the Luwanga–English Dictionary (Anangwe & Marlo, 2008 draft), which the Wanga course is built from, and the Nyore Bible "Ebaibo Inzienukhu" (Bible Society of Kenya, on bible.com) for checking Olunyole spelling. The Bible's reuse terms aren't stated, so its text isn't copied into the app.
 
 **What's in it**
 - **Conversations and your guide**
