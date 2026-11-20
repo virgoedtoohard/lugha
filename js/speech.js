@@ -12,9 +12,19 @@ function Recognizer() {
 // that won't change, remember it and use record-and-compare instead.
 const BROKEN_KEY = "lugha.recogniser";
 const HARD = new Set(["service-not-allowed", "language-not-supported", "unsupported"]);
+// A refusal is remembered for a day, not forever: browsers and phone settings change.
+const BROKEN_FOR_MS = 24 * 60 * 60 * 1000;
 function brokenReason() {
     try {
-        return localStorage.getItem(BROKEN_KEY);
+        const raw = localStorage.getItem(BROKEN_KEY);
+        if (!raw)
+            return null;
+        const [reason, at] = raw.split("|");
+        if (!at || Date.now() - Number(at) > BROKEN_FOR_MS) {
+            localStorage.removeItem(BROKEN_KEY);
+            return null;
+        }
+        return reason;
     }
     catch {
         return null;
@@ -22,7 +32,7 @@ function brokenReason() {
 }
 export function markBroken(reason) {
     try {
-        localStorage.setItem(BROKEN_KEY, reason);
+        localStorage.setItem(BROKEN_KEY, `${reason}|${Date.now()}`);
     }
     catch { /* ignore */ }
 }
@@ -35,8 +45,9 @@ export function resetRecogniser() {
 export const canRecognize = () => !!Recognizer() && !brokenReason();
 export const canRecord = () => typeof navigator.mediaDevices?.getUserMedia === "function" && "MediaRecorder" in window;
 export const isHardError = (code) => HARD.has(code);
-/** Recogniser languages to try, best first. */
-const LANGS = ["sw-KE", "sw-TZ", "sw"];
+/** Recogniser languages to try, best first. Many phones have no Kiswahili recogniser; an
+ *  English one still writes down roughly what it heard, which is enough to compare spellings. */
+const LANGS = ["sw-KE", "sw-TZ", "sw", "en-KE", "en-GB", "en-US"];
 /** Listen once; resolves with the recogniser's guesses (best first). Rejects with the error code. */
 export function listen(timeoutMs = 7000) {
     const R = Recognizer();
@@ -87,6 +98,77 @@ export function listen(timeoutMs = 7000) {
             active?.stop();
         }
         catch { /* ignore */ } } };
+}
+/** One tap: record, stop by itself once the learner has spoken and gone quiet (or after maxMs),
+ *  and report how much voice was in the take. Used where the browser can't recognise speech. */
+export async function recordTake(maxMs = 6000, onLevel) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream);
+    const chunks = [];
+    rec.ondataavailable = (e) => chunks.push(e.data);
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ctx = Ctx ? new Ctx() : null;
+    const analyser = ctx?.createAnalyser();
+    if (ctx && analyser) {
+        analyser.fftSize = 1024;
+        ctx.createMediaStreamSource(stream).connect(analyser);
+    }
+    const buf = new Float32Array(1024);
+    let noise = 0.01, voiced = 0, peak = 0, heardVoice = false, quietFor = 0, frames = 0;
+    const STEP = 50;
+    rec.start();
+    await new Promise((resolve) => {
+        const started = Date.now();
+        const tick = setInterval(() => {
+            frames++;
+            let rms = 0;
+            if (analyser) {
+                analyser.getFloatTimeDomainData(buf);
+                for (const v of buf)
+                    rms += v * v;
+                rms = Math.sqrt(rms / buf.length);
+            }
+            if (frames <= 4)
+                noise = Math.max(noise, rms * 1.5); // the first moment sets the room's noise level
+            const isVoice = analyser ? rms > Math.max(0.02, noise * 2.2) : true;
+            peak = Math.max(peak, rms);
+            onLevel?.(Math.min(1, rms * 8));
+            if (isVoice && frames > 4) {
+                voiced += STEP;
+                heardVoice = true;
+                quietFor = 0;
+            }
+            else
+                quietFor += STEP;
+            const elapsed = Date.now() - started;
+            if (elapsed >= maxMs || (heardVoice && quietFor >= 1100) || (!heardVoice && elapsed >= 4500)) {
+                clearInterval(tick);
+                resolve();
+            }
+        }, STEP);
+    });
+    const url = await new Promise((resolve) => {
+        rec.onstop = () => resolve(URL.createObjectURL(new Blob(chunks, { type: rec.mimeType || "audio/webm" })));
+        rec.stop();
+    });
+    stream.getTracks().forEach((t) => t.stop());
+    void ctx?.close();
+    return { url, voicedSec: voiced / 1000, peak };
+}
+/** Rough syllable count: vowel groups. Used to judge whether a take is about the right length. */
+export function syllables(word) {
+    return Math.max(1, (normalizeSpoken(word).match(/[aeiou]+/g) ?? []).length);
+}
+/** Judge a take with no recogniser: was there a voice, and was it about as long as the word? */
+export function judgeTake(take, expected) {
+    if (take.voicedSec < 0.15)
+        return "silent";
+    const n = syllables(expected);
+    if (take.voicedSec < Math.min(0.25, 0.09 * n))
+        return "short";
+    if (take.voicedSec > 1.2 + 0.55 * n)
+        return "long";
+    return "ok";
 }
 /** Record from the microphone until stop() is called. */
 export async function record() {

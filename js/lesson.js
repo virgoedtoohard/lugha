@@ -336,10 +336,12 @@ function micMessage(err) {
         return { text: t("srNetwork"), hard: false };
     if (code === "audio-capture")
         return { text: t("srNoMic"), hard: false };
-    if (speech.isHardError(code) || code === "start-failed") {
+    if (speech.isHardError(code)) {
         speech.markBroken(code);
         return { text: t("srUnavailable"), hard: true };
     }
+    if (code === "start-failed")
+        return { text: t("tryAgain"), hard: false };
     return { text: t("srFailed", { e: code }), hard: false };
 }
 function micButton(label) {
@@ -394,14 +396,13 @@ function renderSpeak(item) {
                     return;
                 }
                 const best = speech.bestMatch(heard, item.target);
-                if (speech.passes(best.score, item.target)) {
-                    answer(true, item, t("weHeard", { h: esc(best.heard) }));
-                }
-                else {
-                    status.innerHTML = `${t("weHeard", { h: esc(best.heard) })}<br><span class="muted">${t("tryAgain")}</span>`;
-                    if (attempts >= 1)
-                        showSelfCheck(item, attempts >= 3);
-                }
+                // score straight away; a missed word is retried later and costs no water,
+                // because the recogniser only knows Kiswahili and English
+                status.textContent = "";
+                if (speech.passes(best.score, item.target))
+                    answer(true, item, `🎤 ${t("weHeard", { h: esc(best.heard) })}`);
+                else
+                    answer(false, item, `🎤 ${t("weHeard", { h: esc(best.heard) })} · ${t("notTheWord")}`, { noHeart: true });
             }
             catch (e) {
                 mic.classList.remove("live");
@@ -411,34 +412,40 @@ function renderSpeak(item) {
                 if (m.hard && speech.canRecord())
                     setTimeout(() => { if (s?.queue[s.pos]?.kind === "speak")
                         renderSpeak(item); }, 1800);
-                else
+                else if (m.hard)
                     showSelfCheck(item, false);
             }
         });
     }
     else {
-        let rec = null;
+        // No recogniser on this phone: one tap records, it stops by itself, and the take is scored at once
         mic.addEventListener("click", async () => {
-            if (rec) {
-                const url = await rec.stop();
-                rec = null;
-                mic.classList.remove("live");
-                status.textContent = t("compare");
-                $("#compare").innerHTML = `<div class="compare-row">
-          <button class="btn btn-small" id="play-mine">▶ ${t("yours")}</button>
-          ${audio.hasAudio(item, code()) ? `<button class="btn btn-small" id="play-model">▶ ${t("model")}</button>` : ""}</div>`;
-                $("#play-mine").addEventListener("click", () => audio.playUrl(url));
-                $("#play-model")?.addEventListener("click", () => playItem(item));
-                audio.playUrl(url);
-                showSelfCheck(item, true);
+            if (mic.classList.contains("live"))
                 return;
-            }
+            audio.stop();
+            mic.classList.add("live");
+            status.textContent = t("sayingNow");
             try {
-                rec = await speech.record();
-                mic.classList.add("live");
-                status.textContent = t("recording");
+                const take = await speech.recordTake(6000, (lv) => mic.style.setProperty("--lv", String(lv)));
+                mic.classList.remove("live");
+                const verdict = speech.judgeTake(take, item.target);
+                if (verdict === "silent") {
+                    status.textContent = t("heardNothing");
+                    return;
+                }
+                status.textContent = "";
+                const replay = `<div class="compare-row">
+          <button class="btn btn-small" id="play-mine">▶ ${t("yours")}</button>
+          <button class="btn btn-small" id="play-model">▶ ${t("model")}</button></div>`;
+                if (verdict === "ok")
+                    answer(true, item, `🎤 ${t("voiceChecked")}${replay}`);
+                else
+                    answer(false, item, `🎤 ${t(verdict === "short" ? "tooShort" : "tooLong")}${replay}`, { noHeart: true });
+                $("#play-mine")?.addEventListener("click", () => audio.playUrl(take.url));
+                $("#play-model")?.addEventListener("click", () => playItem(item));
             }
             catch {
+                mic.classList.remove("live");
                 status.textContent = t("micBlocked");
             }
         });
@@ -490,13 +497,12 @@ function offerSpokenAnswer(expected) {
                     return;
                 }
                 const best = speech.bestMatch(heard, expected.target);
-                if (speech.passes(best.score, expected.target)) {
-                    $$(".opt, .word, #answer").forEach((b) => { b.disabled = true; });
+                $$(".opt, .word, #answer, #check").forEach((b) => { b.disabled = true; });
+                box.hidden = true;
+                if (speech.passes(best.score, expected.target))
                     answer(true, expected, `🎤 ${t("weHeard", { h: esc(best.heard) })}`);
-                }
-                else {
-                    $("#sp-status").innerHTML = `${t("weHeard", { h: esc(best.heard) })} · ${t("tryAgain")}`;
-                }
+                else
+                    answer(false, expected, `🎤 ${t("weHeard", { h: esc(best.heard) })} · ${t("notTheWord")}`, { noHeart: true });
             }
             catch (e) {
                 mic.classList.remove("live");
@@ -622,7 +628,7 @@ function renderConvo(ex) {
             chosen = b.dataset.v;
             check.disabled = false;
         }));
-        const resolve = (ok, heard) => {
+        const resolve = (ok, heard, spoken = false) => {
             opts.forEach((o) => { o.disabled = true; });
             if (turn.answer.item)
                 recordAnswer(turn.answer.item.id, ok);
@@ -652,7 +658,7 @@ function renderConvo(ex) {
             }
             else {
                 s.mistakes++;
-                if (s.mode === "lesson")
+                if (s.mode === "lesson" && !spoken)
                     loseHeart();
                 foot.className = "lesson-foot bad";
                 foot.innerHTML = `<div class="feedback"><div class="fb-head">💧 ${t("notQuite")}</div>
@@ -681,10 +687,7 @@ function renderConvo(ex) {
                     return;
                 }
                 const best = speech.bestMatch(heard, turn.answer.target);
-                if (speech.passes(best.score, turn.answer.target))
-                    resolve(true, best.heard);
-                else
-                    st.textContent = `${t("weHeard", { h: best.heard })} · ${t("tryAgain")}`;
+                resolve(speech.passes(best.score, turn.answer.target), best.heard, true);
             }
             catch (e) {
                 const m = micMessage(e);
@@ -756,7 +759,7 @@ function answer(correct, item, extra, opt = {}) {
         s.correct++;
     else {
         s.mistakes++;
-        if (s.mode === "lesson")
+        if (s.mode === "lesson" && !opt.noHeart)
             loseHeart();
         if (s.mode !== "test" && !s.retried.has(ex)) {
             s.retried.add(ex);
