@@ -331,7 +331,11 @@ input, select { font: inherit; }
 
 /* ---------- Top bar brand ---------- */
 .top-left { display: flex; align-items: center; gap: .45rem; min-width: 0; }
-.top-brand { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); flex: none; }
+.top-brand { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--card); border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); flex: none; transition: transform .08s; }
+.top-brand:hover .hut { transform: translateY(-1px) rotate(-3deg); }
+.top-brand:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink); }
+.top-brand .ic { vertical-align: 0; }
+.hut { transition: transform .15s; }
 .top-left .course-pill { max-width: 170px; }
 
 /* ---------- Home page ---------- */
