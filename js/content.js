@@ -82,7 +82,9 @@ const S = {
 };
 // ───────────────────────── Gĩkũyũ ─────────────────────────
 const kikuyu = {
-    code: "kik", family: "Gĩkũyũ", name: "Kikuyu", nativeName: "Gĩkũyũ",
+    code: "kik", guide: "kik",
+    frames: { whatIs: { target: "Kĩu nĩ kĩĩ?", english: "What is that?", swahili: "Hicho ni nini?", confidence: "medium" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ ciigana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "kik-u1-l1-4", bye: "kik-u1-l2-5", greet: ["kik-u1-l1-1", "kik-u1-l1-2"] },
+    family: "Gĩkũyũ", name: "Kikuyu", nativeName: "Gĩkũyũ",
     speakers: "Central Kenya — Nyeri, Murang'a, Kiambu, Kirinyaga, Nyandarua",
     dialectNote: "Uses general Gĩkũyũ spelling with tilde vowels (ĩ, ũ).",
     cast: cast(["Cũcũ Wairimu", "👵🏾"], "Kamau", "Mama Njeri", "Mwangi"),
@@ -182,7 +184,9 @@ const kikuyu = {
 };
 // ───────────────────────── Dholuo ─────────────────────────
 const luo = {
-    code: "luo", family: "Dholuo", name: "Luo", nativeName: "Dholuo",
+    code: "luo", guide: "luo",
+    frames: { whatIs: { target: "Mano en ang'o?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "medium" }, itIs: { prefix: "En ", en: "It's ", sw: "Ni " }, howMany: { target: "Gin adi?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "medium" }, thanks: "luo-u1-l1-4", bye: "luo-u1-l2-5", greet: ["luo-u1-l1-2", "luo-u1-l1-3"] },
+    family: "Dholuo", name: "Luo", nativeName: "Dholuo",
     speakers: "Around Lake Victoria — Kisumu, Siaya, Homa Bay, Migori",
     dialectNote: "Dholuo is tonal; written forms here don't mark tone, so native audio matters a lot.",
     cast: cast(["Dani Akoth", "👵🏾"], "Otieno", "Mama Atieno", "Ochieng'"),
@@ -282,7 +286,9 @@ const luo = {
 };
 // ───────────────────────── Kĩkamba ─────────────────────────
 const kamba = {
-    code: "kam", family: "Kĩkamba", name: "Kamba", nativeName: "Kĩkamba",
+    code: "kam", guide: "kam",
+    frames: { whatIs: { target: "Kĩĩ nĩ kyaũ?", english: "What is this?", swahili: "Hiki ni nini?", confidence: "low" }, itIs: { prefix: "Nĩ ", en: "It's ", sw: "Ni " }, howMany: { target: "Nĩ syĩana?", english: "How many are there?", swahili: "Ni ngapi?", confidence: "low" }, thanks: "kam-u1-l1-5", greet: ["kam-u1-l1-3", "kam-u1-l1-4"] },
+    family: "Kĩkamba", name: "Kamba", nativeName: "Kĩkamba",
     speakers: "Eastern Kenya — Machakos, Makueni, Kitui",
     dialectNote: "Uses common Machakos-area spelling.",
     cast: cast(["Susu Mwikali", "👵🏾"], "Musyoka", "Mama Mwende", "Mutua"),
@@ -358,7 +364,9 @@ const kamba = {
 };
 // ───────────────────────── Kalenjin ─────────────────────────
 const kalenjinGeneral = {
-    code: "kln", family: "Kalenjin", name: "General", nativeName: "Kalenjin",
+    code: "kln", guide: "kln",
+    frames: { howMany: { target: "Ata?", english: "How many?", swahili: "Ngapi?", confidence: "medium" }, thanks: "kln-u1-l1-3", greet: ["kln-u1-l1-1", "kln-u1-l1-2"] },
+    family: "Kalenjin", name: "General", nativeName: "Kalenjin",
     speakers: "Rift Valley — Uasin Gishu, Nandi, Kericho, Bomet, Elgeyo-Marakwet, Baringo",
     dialectNote: "Words widely shared across Kalenjin varieties. For variety-specific lessons choose Kipsigis or Nandi.",
     cast: cast(["Kogo Chebet", "👵🏾"], "Kiprono", "Mama Chepkoech", "Kipchumba"),
@@ -426,7 +434,9 @@ const kalenjinGeneral = {
     ],
 };
 const kipsigis = {
-    code: "kln-sgc", family: "Kalenjin", name: "Kipsigis", nativeName: "Kipsigis",
+    code: "kln-sgc", guide: "kln",
+    frames: { howMany: { target: "Ata?", english: "How many?", swahili: "Ngapi?", confidence: "medium" }, thanks: "kln-sgc-u1-l1-3", greet: ["kln-sgc-u1-l1-1", "kln-sgc-u1-l1-2"] },
+    family: "Kalenjin", name: "Kipsigis", nativeName: "Kipsigis",
     speakers: "Kericho and Bomet — the largest Kalenjin group",
     dialectNote: "Kipsigis spelling. Kipsigis has long and short vowels (written doubled), which audio will make clear.",
     cast: cast(["Kogo Chepng'eno", "👵🏾"], "Kiprotich", "Mama Chelangat", "Kibet"),
@@ -450,7 +460,9 @@ const kipsigis = {
     ],
 };
 const nandi = {
-    code: "kln-niq", family: "Kalenjin", name: "Nandi", nativeName: "Naandi",
+    code: "kln-niq", guide: "kln",
+    frames: { thanks: "kln-niq-u1-l1-2", greet: ["kln-niq-u1-l1-1", "kln-niq-u1-l1-1"] },
+    family: "Kalenjin", name: "Nandi", nativeName: "Naandi",
     speakers: "Nandi and Uasin Gishu",
     dialectNote: "Nandi spelling often writes k where Kipsigis writes g (akenge / agenge).",
     cast: cast(["Kogo Jeptoo", "👵🏾"], "Kipkemboi", "Mama Jepkosgei", "Kiptanui"),
@@ -475,7 +487,9 @@ const nandi = {
 };
 // ───────────────────────── Luhya ─────────────────────────
 const luhyaGeneral = {
-    code: "luy", family: "Luhya", name: "General", nativeName: "Oluluhya",
+    code: "luy", guide: "luy",
+    frames: { greet: ["luy-u1-l1-1", "luy-u1-l1-1"] },
+    family: "Luhya", name: "General", nativeName: "Oluluhya",
     speakers: "Western Kenya — Kakamega, Bungoma, Vihiga, Busia",
     dialectNote: "Words heard across many Luhya varieties. For dialect-specific lessons choose Bukusu, Maragoli or Nyore.",
     cast: cast(["Guku Nafula", "👵🏾"], "Wafula", "Mama Nekesa", "Barasa", tr("Grandparent", "Babu au bibi")),
@@ -522,7 +536,9 @@ const luhyaGeneral = {
     ],
 };
 const bukusu = {
-    code: "luy-bxk", family: "Luhya", name: "Bukusu", nativeName: "Lubukusu",
+    code: "luy-bxk", guide: "luy",
+    frames: { thanks: "luy-bxk-u1-l1-4", greet: ["luy-bxk-u1-l1-2", "luy-bxk-u1-l1-3"] },
+    family: "Luhya", name: "Bukusu", nativeName: "Lubukusu",
     speakers: "Bungoma and Trans Nzoia — the largest Luhya group",
     dialectNote: "Numbers and words from community word lists; greetings partly from Lugisu, Bukusu's sister variety. All need a Bukusu reviewer.",
     cast: cast(["Guku Nasimiyu", "👵🏾"], "Wanjala", "Mama Nekesa", "Simiyu", tr("Grandparent", "Babu au bibi")),
@@ -546,7 +562,9 @@ const bukusu = {
     ],
 };
 const maragoli = {
-    code: "luy-rag", family: "Luhya", name: "Maragoli", nativeName: "Lulogooli",
+    code: "luy-rag", guide: "luy",
+    frames: { thanks: "luy-rag-u1-l1-4", bye: "luy-rag-u1-l2-3", greet: ["luy-rag-u1-l1-2", "luy-rag-u1-l1-3"] },
+    family: "Luhya", name: "Maragoli", nativeName: "Lulogooli",
     speakers: "Vihiga County",
     dialectNote: "Phrases from community-contributed lists; numbers are low-confidence drafts. Needs a Maragoli reviewer.",
     cast: cast(["Guku Mideva", "👵🏾"], "Kavai", "Mama Ambasa", "Mudeizi", tr("Grandparent", "Babu au bibi")),
@@ -577,7 +595,9 @@ const maragoli = {
     ],
 };
 const nyore = {
-    code: "luy-nyd", family: "Luhya", name: "Nyore", nativeName: "Olunyole",
+    code: "luy-nyd", guide: "luy",
+    frames: { greet: ["luy-nyd-u1-l1-1", "luy-nyd-u1-l1-1"] },
+    family: "Luhya", name: "Nyore", nativeName: "Olunyole",
     speakers: "Luanda and Emuhaya, Vihiga County",
     dialectNote: "Very little Olunyole is published online. This starter course needs a Nyore reviewer to grow it.",
     cast: cast(["Guku Anyango", "👵🏾"], "Omondi", "Mama Khayanga", "Ominde", tr("Grandparent", "Babu au bibi")),

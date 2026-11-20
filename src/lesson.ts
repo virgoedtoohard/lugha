@@ -5,12 +5,12 @@ import { L, t } from "./i18n.js";
 import * as speech from "./speech.js";
 import {
   addXp, completeLesson, gainHeart, getProgress, loseHeart, MAX_HEARTS, msToNextHeart, recordAnswer, recordTest,
-  saveProgress, snoozeSpeaking, speakingActive,
+  saveProgress, setPartial, snoozeSpeaking, speakingActive,
 } from "./store.js";
-import type { Course, Exercise, Item, Unit } from "./types.js";
+import type { Course, Exercise, Item, Line, Turn, Unit } from "./types.js";
 import { $, $$, app, esc, fmtDuration, toast } from "./ui.js";
 
-type Mode = "lesson" | "practice" | "test";
+type Mode = "lesson" | "practice" | "test" | "talk";
 
 interface Session {
   mode: Mode;
@@ -27,15 +27,17 @@ interface Session {
   correct: number;
   retried: Set<Exercise>;
   started: number;
+  sub: number;           // progress through a conversation exercise (0..1)
+  award: number;         // beads for finishing a conversation session
   onExit: () => void;
 }
 
 let s: Session | null = null;
 
-export function startSession(opts: { mode: Mode; course: Course; unit?: Unit; lessonId?: string; title: string; bead: string; exercises: Exercise[]; onExit: () => void }): void {
+export function startSession(opts: { mode: Mode; course: Course; unit?: Unit; lessonId?: string; title: string; bead: string; exercises: Exercise[]; award?: number; onExit: () => void }): void {
   if (opts.mode === "lesson" && getProgress().hearts <= 0) { emptyCalabash(opts.onExit); return; }
   const usable = opts.exercises.filter((e) => e.kind !== "speak" || speech.canRecognize() || speech.canRecord());
-  s = { ...opts, queue: usable, pos: 0, total: usable.length, questions: usable.length, mistakes: 0, correct: 0, retried: new Set(), started: Date.now() };
+  s = { ...opts, queue: usable, pos: 0, total: usable.length, questions: usable.length, mistakes: 0, correct: 0, retried: new Set(), started: Date.now(), sub: 0, award: opts.award ?? 0 };
   renderExercise();
 }
 
@@ -58,8 +60,8 @@ function approxChip(items: Item[]): string {
 
 /** Progress shown as beads being threaded onto a string. */
 function beadString(): string {
-  const n = Math.min(s!.total, 16);
-  const done = Math.round((s!.pos / s!.total) * n);
+  const n = Math.min(Math.max(s!.total, s!.mode === "talk" ? 10 : 1), 16);
+  const done = Math.round(((s!.pos + s!.sub) / s!.total) * n);
   return `<div class="thread" aria-label="${s!.pos} / ${s!.total}">${Array.from({ length: n }, (_, i) =>
     `<span class="tb ${i < done ? "on" : ""}" style="--c:${s!.bead}"></span>`).join("")}</div>`;
 }
@@ -67,7 +69,7 @@ function beadString(): string {
 function shell(inner: string, items: Item[], canSpeakAnswer = false): string {
   const p = getProgress();
   const right = s!.mode === "lesson" ? `<span class="water" title="${t("calabash")}">${calabash(p.hearts)} ${p.hearts}</span>`
-    : s!.mode === "test" ? `<span class="water">🏁</span>` : `<span class="water">🪣</span>`;
+    : s!.mode === "test" ? `<span class="water">🏁</span>` : s!.mode === "talk" ? `<span class="water">💬</span>` : `<span class="water">🪣</span>`;
   const micOffer = canSpeakAnswer && speakingActive() && speech.canRecognize()
     ? `<button class="mic-offer" id="mic-offer">🎤 ${t("speakInstead")}</button>` : "";
   return `
@@ -133,6 +135,10 @@ function renderExercise(): void {
     }
     case "speak": {
       renderSpeak(ex.item);
+      break;
+    }
+    case "convo": {
+      renderConvo(ex);
       break;
     }
     case "scene": {
@@ -399,6 +405,158 @@ function offerSpokenAnswer(expected: Item): void {
   });
 }
 
+// ---------- conversations ----------
+const lineMeaning = (l: Line) => (getLangSafe() === "sw" ? l.swahili || l.english : l.english);
+function getLangSafe(): string { return document.documentElement.lang === "sw" ? "sw" : "en"; }
+
+function savePartial(): void {
+  if (!s || !s.lessonId || (s.mode !== "lesson" && s.mode !== "talk")) return;
+  setPartial(s.lessonId, Math.min(0.99, (s.pos + s.sub) / Math.max(1, s.total)));
+}
+
+function refreshThread(): void {
+  const th = document.querySelector(".thread");
+  if (th) th.outerHTML = beadString();
+}
+
+function playLine(l: Line): Promise<void> {
+  return l.item ? audio.play(l.item, code()) : Promise.resolve();
+}
+
+function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
+  const who = (k: string) => ex.cast.find((c) => c.key === k);
+  const replies = ex.turns.filter((x) => x.type === "reply").length;
+  let ti = 0, answered = 0;
+  const lineItems = ex.turns.flatMap((x) => x.type === "say" ? (x.line.item ? [x.line.item] : []) : x.type === "reply" && x.answer.item ? [x.answer.item] : []);
+  app().innerHTML = shell(`
+    <div class="scene-tag">${ex.big ? "🔥" : "💬"} ${esc(L(ex.title))} · ${esc(L(ex.setting))}</div>
+    <div class="chat convo" id="chat"></div>
+    <div id="reply"></div>
+  `, lineItems);
+  const chat = $("#chat");
+  const foot = $("#foot");
+  foot.innerHTML = "";
+
+  const bubble = (html: string, mine = false, k?: string) => {
+    const c = k ? who(k) : undefined;
+    const row = document.createElement("div");
+    row.className = `bubble-row ${mine ? "mine" : ""} pop`;
+    row.innerHTML = `${!mine && c ? `<span class="avatar" title="${esc(`${c.name} · ${L(c.role)}`)}">${c.avatar}</span>` : ""}<div class="bubble">${!mine && c ? `<span class="who">${esc(c.name)}</span>` : ""}${html}</div>`;
+    chat.appendChild(row);
+    row.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return row;
+  };
+  const sayHtml = (l: Line) => `<span class="target-text bubble-line">${esc(l.target)}${l.item && audio.hasAudio(l.item, code()) ? ` <button class="mini-speak" aria-label="${t("playSound")}">🔊</button>` : ""}</span><button class="peek">${esc(lineMeaning(l))}</button>`;
+  const wire = (row: HTMLElement, l: Line) => {
+    row.querySelector(".mini-speak")?.addEventListener("click", () => playLine(l));
+    row.querySelector(".peek")?.addEventListener("click", (e) => (e.currentTarget as HTMLElement).classList.toggle("shown"));
+  };
+
+  const next = async (): Promise<void> => {
+    if (!s || s.queue[s.pos] !== ex) return;
+    if (ti >= ex.turns.length) return done();
+    const turn = ex.turns[ti];
+    if (turn.type === "say") {
+      const row = bubble(sayHtml(turn.line), false, turn.who);
+      wire(row, turn.line);
+      ti++;
+      await Promise.race([playLine(turn.line), new Promise((r) => setTimeout(r, 2500))]);
+      await new Promise((r) => setTimeout(r, 350));
+      return next();
+    }
+    if (turn.type === "narrate") {
+      const row = document.createElement("div");
+      row.className = "narration pop";
+      row.innerHTML = `${turn.cue ? `<span class="cue">${turn.cue}</span>` : ""}<span>${esc(L(turn.text))}</span>`;
+      chat.appendChild(row);
+      ti++;
+      await new Promise((r) => setTimeout(r, 700));
+      return next();
+    }
+    askReply(turn);
+  };
+
+  const askReply = (turn: Extract<Turn, { type: "reply" }>) => {
+    if ((window as any).__LUGHA_TEST__) (window as any).__answer = turn.answer.target;
+    const box = $("#reply");
+    box.innerHTML = `
+      ${turn.cue || turn.prompt ? `<div class="reply-cue">${turn.cue ? `<span class="cue big">${turn.cue}</span>` : ""}${turn.prompt ? `<span>${esc(L(turn.prompt))}</span>` : ""}</div>` : ""}
+      <h2 class="ex-title small-title">${t("whatReply")}</h2>
+      <div class="options">${turn.options.map((o, i) => optBtn(o, i, true)).join("")}</div>
+      ${speakingActive() && speech.canRecognize() ? `<button class="mic-offer" id="convo-mic">🎤 ${t("speakInstead")}</button><p class="mic-status small" id="convo-mic-status"></p>` : ""}`;
+    foot.className = "lesson-foot";
+    foot.innerHTML = `<button class="btn btn-primary btn-wide" id="check" disabled>${t("check")}</button>`;
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    let chosen: string | null = null;
+    const opts = $$<HTMLButtonElement>("#reply .opt");
+    const check = $<HTMLButtonElement>("#check");
+    opts.forEach((b) => b.addEventListener("click", () => {
+      opts.forEach((o) => o.classList.remove("sel"));
+      b.classList.add("sel"); chosen = b.dataset.v!; check.disabled = false;
+    }));
+    const resolve = (ok: boolean, heard?: string) => {
+      opts.forEach((o) => { o.disabled = true; });
+      if (turn.answer.item) recordAnswer(turn.answer.item.id, ok);
+      answered++;
+      s!.sub = answered / replies;
+      refreshThread();
+      savePartial();
+      const row = bubble(sayHtml(turn.answer), true);
+      wire(row, turn.answer);
+      if (!ok) row.querySelector(".bubble")!.classList.add("corrected");
+      void playLine(turn.answer);
+      // keep the question in the transcript, so the conversation reads well afterwards
+      if (turn.prompt || turn.cue) {
+        const ctx = document.createElement("div");
+        ctx.className = "narration";
+        ctx.innerHTML = `${turn.cue ? `<span class="cue">${turn.cue}</span>` : ""}${turn.prompt ? `<span>${esc(L(turn.prompt))}</span>` : ""}`;
+        chat.insertBefore(ctx, row);
+      }
+      box.innerHTML = "";
+      if (ok) {
+        s!.correct++;
+        foot.className = "lesson-foot good slim";
+        foot.innerHTML = `<div class="fb-head">${bead(s!.bead, 20)} ${t("nice")}${heard ? ` <span class="muted small">🎤 ${esc(heard)}</span>` : ""}</div>`;
+        ti++;
+        setTimeout(() => { void next(); }, 900);
+      } else {
+        s!.mistakes++;
+        if (s!.mode === "lesson") loseHeart();
+        foot.className = "lesson-foot bad";
+        foot.innerHTML = `<div class="feedback"><div class="fb-head">💧 ${t("notQuite")}</div>
+          <div class="solution">${t("correctAns")} <b class="target-text">${esc(turn.answer.target)}</b> = ${esc(lineMeaning(turn.answer))}</div></div>
+          <button class="btn btn-danger btn-wide" id="next">${t("cont")}</button>`;
+        $("#next").addEventListener("click", () => {
+          if (s?.mode === "lesson" && getProgress().hearts <= 0) { const exit = s.onExit; s = null; emptyCalabash(exit); return; }
+          ti++; void next();
+        });
+      }
+    };
+    check.addEventListener("click", () => resolve(chosen === turn.answer.target));
+    $("#convo-mic")?.addEventListener("click", async () => {
+      const st = $("#convo-mic-status");
+      st.textContent = t("listening");
+      try {
+        const heard = await speech.listen().done;
+        if (!heard.length) { st.textContent = t("heardNothing"); return; }
+        const best = speech.bestMatch(heard, turn.answer.target);
+        if (speech.passes(best.score, turn.answer.target)) resolve(true, best.heard);
+        else st.textContent = `${t("weHeard", { h: best.heard })} · ${t("tryAgain")}`;
+      } catch (e) { st.textContent = (e as Error).message === "not-allowed" ? t("micBlocked") : t("heardNothing"); }
+    });
+  };
+
+  const done = () => {
+    s!.sub = 0;
+    foot.className = "lesson-foot good";
+    foot.innerHTML = `<button class="btn btn-primary btn-wide" id="next">${t("cont")}</button>`;
+    $("#next").addEventListener("click", () => { if (!s) return; s.pos++; savePartial(); renderExercise(); });
+  };
+
+  $("#quit").addEventListener("click", confirmQuit);
+  void next();
+}
+
 // ---------- flow ----------
 function confirmQuit(): void {
   audio.stop();
@@ -471,6 +629,7 @@ function answer(correct: boolean, item: Item, extra?: string, opt: { skipRecord?
     if (!s) return;
     if (s.mode === "lesson" && getProgress().hearts <= 0) { const exit = s.onExit; s = null; emptyCalabash(exit); return; }
     s.pos++;
+    savePartial();
     renderExercise();
   };
   const onKey = (e: KeyboardEvent) => { if (e.key === "Enter") { e.preventDefault(); go(); } };
@@ -501,6 +660,27 @@ function finish(): void {
           <div class="stat"><span class="stat-n">${time}</span><span class="stat-l">${t("time")}</span></div>
         </div>
         ${passed ? "" : `<p class="muted">${t("needScore")}</p>`}
+        <button class="btn btn-primary btn-wide" id="cont">${t("cont")}</button>
+      </div>`;
+    $("#cont").addEventListener("click", sess.onExit);
+    return;
+  }
+
+  if (sess.mode === "talk") {
+    if (sess.lessonId) completeLesson(sess.lessonId);
+    addXp(sess.award);
+    const p = getProgress();
+    app().innerHTML = `
+      <div class="done-screen">
+        <div class="done-art">💬</div>
+        <h1>${t("talkDone")}</h1>
+        <p class="muted">${esc(sess.title)}</p>
+        <div class="stats-row">
+          <div class="stat"><span class="stat-n">+${sess.award}</span><span class="stat-l">${t("beadsEarned")}</span></div>
+          <div class="stat"><span class="stat-n">${sess.correct}/${sess.correct + sess.mistakes}</span><span class="stat-l">${t("accuracy")}</span></div>
+          <div class="stat"><span class="stat-n">${time}</span><span class="stat-l">${t("time")}</span></div>
+        </div>
+        <p class="streak-line">${hearth(true, 26)} ${t("fireKept", { n: p.streak, d: p.streak === 1 ? t("day") : t("days") })}</p>
         <button class="btn btn-primary btn-wide" id="cont">${t("cont")}</button>
       </div>`;
     $("#cont").addEventListener("click", sess.onExit);

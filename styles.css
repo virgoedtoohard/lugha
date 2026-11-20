@@ -236,7 +236,7 @@ body.in-lesson { background: var(--card); }
 .quit-row span { flex: 1 1 100%; font-weight: 700; }
 
 .done-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: .6rem; padding: 2rem 1.4rem; }
-.done-art { margin-bottom: .4rem; animation: drop .6s ease-out; }
+.done-art { margin-bottom: .4rem; animation: drop .6s ease-out; font-size: 4.5rem; line-height: 1; }
 @keyframes drop { from { transform: translateY(-40px) scale(.6); } to { transform: none; } }
 .streak-line { font-weight: 700; color: var(--orange); display: flex; align-items: center; gap: .4rem; }
 
@@ -409,3 +409,39 @@ body.on-home #app { max-width: 1080px; }
   .speak-sec { grid-template-columns: 1fr 1.1fr; }
   .speak-demo { order: 2; }
 }
+
+/* ---------- Journey: guide, conversation stops ---------- */
+.journey-head { display: flex; align-items: center; gap: .7rem; margin-top: 1rem; }
+.journey-head .journey-title { margin: 0; }
+.journey-head p { margin: .1rem 0 0; }
+.guide-badge { flex: none; width: 52px; height: 64px; border-radius: 14px; background: var(--card); border: 2px solid var(--ink); display: grid; place-items: center; overflow: hidden; }
+.guide-badge .guide-svg { margin-top: 4px; }
+
+.node.k-talk .node-dot { border-radius: 50% 50% 50% 10%; }
+.node.k-leg .node-dot { width: 76px; height: 76px; font-size: 1.7rem; background: radial-gradient(circle at 50% 70%, #F6C343 0 22%, #E8742B 23% 45%, var(--bead) 46%); }
+.node.k-leg.locked .node-dot { background: #D9CDB8; }
+.node.gate.side { width: 96px; z-index: 1; }
+.node.gate.side .node-dot { width: 46px; height: 46px; font-size: 1.1rem; box-shadow: 2px 2px 0 var(--ink); }
+.node.gate.side .node-label { font-size: .72rem; }
+
+.walker { position: absolute; z-index: 3; transform: translate(-50%, -82%); pointer-events: none; display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 2px 0 rgba(0,0,0,.08)); }
+.walker .guide-svg { animation: idle 2.4s ease-in-out infinite; }
+.here-tag { margin-top: -6px; font-size: .62rem; font-weight: 800; background: var(--ink); color: #fff; padding: .1rem .45rem; border-radius: 999px; white-space: nowrap; margin-bottom: 2px; }
+@keyframes idle { 50% { transform: translateY(-2px); } }
+.guide-svg .leg, .guide-svg .arm { transform-box: fill-box; transform-origin: 50% 0; }
+.walker.walking .guide-svg { animation: bounce .32s ease-in-out infinite; }
+.walker.walking .leg-l, .walker.walking .arm-l { animation: swing .32s ease-in-out infinite alternate; }
+.walker.walking .leg-r { animation: swing .32s ease-in-out infinite alternate-reverse; }
+@keyframes swing { from { transform: rotate(14deg); } to { transform: rotate(-14deg); } }
+@keyframes bounce { 50% { transform: translateY(-3px); } }
+
+/* ---------- Conversations ---------- */
+.chat.convo { min-height: 120px; }
+.pop { animation: pop .28s ease-out; }
+@keyframes pop { from { transform: translateY(8px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.narration { display: flex; align-items: center; gap: .6rem; justify-content: center; text-align: center; font-style: italic; color: var(--muted); font-size: .95rem; padding: .3rem .6rem; }
+.cue { font-size: 1.6rem; font-style: normal; letter-spacing: .05em; }
+.cue.big { font-size: 2.2rem; line-height: 1.2; word-break: break-all; }
+.reply-cue { display: flex; flex-direction: column; align-items: center; gap: .3rem; text-align: center; background: #fff; border: 2px dashed #C9B99E; border-radius: 16px; padding: .7rem; margin-top: .4rem; font-weight: 700; }
+.bubble.corrected { border-color: var(--red); background: var(--clay-soft); }
+.lesson-foot.slim { padding-top: .8rem; padding-bottom: calc(.8rem + env(safe-area-inset-bottom)); }

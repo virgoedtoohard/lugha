@@ -95,20 +95,172 @@ export const BOMA_PIECES = [
   { en: "a fence and the family hearth", sw: "ua na meko ya familia" },
 ];
 
-/** Winding road through one unit's lessons. Returns svg + node positions (percent). */
-export function road(count: number): { svg: string; pts: { x: number; y: number }[] } {
-  const H = 110 * count + 30, W = 300;
-  const pts = Array.from({ length: count }, (_, i) => ({ x: W / 2 + Math.sin(i * 1.3) * 80, y: 55 + i * 110 }));
+/** Winding road through one unit's stops. Returns svg, node positions (percent) and a way
+ *  to find any point between two nodes, so the guide can stand part-way along the road. */
+export function road(count: number): { svg: string; pts: { x: number; y: number }[]; between: (k: number, f: number) => { x: number; y: number }; height: number } {
+  const H = 110 * count + 60, W = 300;
+  const pts = Array.from({ length: count }, (_, i) => ({ x: W / 2 + Math.sin(i * 1.3) * 80, y: 85 + i * 110 }));
+  const stops = [{ x: W / 2, y: 0 }, ...pts, { x: W / 2, y: H }];
   let d = `M${W / 2} 0`;
-  let prev = { x: W / 2, y: 0 };
-  for (const p of [...pts, { x: W / 2, y: H }]) {
-    const my = (prev.y + p.y) / 2;
-    d += ` C${prev.x} ${my} ${p.x} ${my} ${p.x} ${p.y}`;
-    prev = p;
+  for (let j = 1; j < stops.length; j++) {
+    const a = stops[j - 1], b = stops[j], my = (a.y + b.y) / 2;
+    d += ` C${a.x} ${my} ${b.x} ${my} ${b.x} ${b.y}`;
   }
+  // Point a fraction f of the way (by distance along the road) from node k to node k+1;
+  // k = count-1 heads to the end of the road, k = -1 starts from the top.
+  const cubic = (a: { x: number; y: number }, b: { x: number; y: number }, s: number) => {
+    const my = (a.y + b.y) / 2, u = 1 - s;
+    return {
+      x: u * u * u * a.x + 3 * u * u * s * a.x + 3 * u * s * s * b.x + s * s * s * b.x,
+      y: u * u * u * a.y + 3 * u * u * s * my + 3 * u * s * s * my + s * s * s * b.y,
+    };
+  };
+  const between = (k: number, f: number) => {
+    const a = stops[k + 1], b = stops[Math.min(k + 2, stops.length - 1)];
+    const N = 40;
+    const samples = Array.from({ length: N + 1 }, (_, i) => cubic(a, b, i / N));
+    const lens = [0];
+    for (let i = 1; i <= N; i++) lens.push(lens[i - 1] + Math.hypot(samples[i].x - samples[i - 1].x, samples[i].y - samples[i - 1].y));
+    const want = Math.max(0, Math.min(1, f)) * lens[N];
+    let i = 1;
+    while (i < N && lens[i] < want) i++;
+    const seg = lens[i] - lens[i - 1] || 1, q = (want - lens[i - 1]) / seg;
+    const x = samples[i - 1].x + (samples[i].x - samples[i - 1].x) * q;
+    const y = samples[i - 1].y + (samples[i].y - samples[i - 1].y) * q;
+    return { x: (x / W) * 100, y: (y / H) * 100 };
+  };
   const svg = `<svg class="road" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <path d="${d}" fill="none" stroke="#D2B48A" stroke-width="26" stroke-linecap="round"/>
     <path d="${d}" fill="none" stroke="#B8946A" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round"/>
   </svg>`;
-  return { svg, pts: pts.map((p) => ({ x: (p.x / W) * 100, y: (p.y / H) * 100 })) };
+  return { svg, pts: pts.map((p) => ({ x: (p.x / W) * 100, y: (p.y / H) * 100 })), between, height: H };
+}
+
+/** Small thatched hut: the home button. */
+export function hutIcon(size = 30): string {
+  return `<svg class="ic hut" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+    <rect x="7" y="15" width="18" height="13" rx="2" fill="#B5733F" stroke="#2B1D14" stroke-width="1.4"/>
+    <path d="M13 28v-6a3 3 0 0 1 6 0v6z" fill="#4A2F1D"/>
+    <path d="M3 17 L16 4 L29 17 Z" fill="#D9AE5F" stroke="#2B1D14" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M9 13 L16 6 M12 15.5 L16 9 M23 13 L16 6 M20 15.5 L16 9" stroke="#A88341" stroke-width="1.1"/>
+    <path d="M15 4.5 L16 1.8 L17 4.5" fill="none" stroke="#2B1D14" stroke-width="1.2"/>
+  </svg>`;
+}
+
+/** Tiny bead string for the Boma tab. */
+export function beadsIcon(size = 26): string {
+  const cols = ["#B8322A", "#2456A4", "#E2A21B", "#3E7B3A", "#D9692B"];
+  return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M3 6 Q16 34 29 6" fill="none" stroke="#C9B99E" stroke-width="1.2"/>
+    ${[[5, 11], [9, 17], [16, 20], [23, 17], [27, 11]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="3.2" fill="${cols[i]}" stroke="#fff" stroke-width=".6"/>`).join("")}
+  </svg>`;
+}
+
+// ---------- Walking guides in cultural dress ----------
+// Stylised figures inspired by dress and objects strongly associated with each community.
+// They are illustrations, not costumes of record: have community members review them.
+const SKIN = "#5C3A21", SKIN_D = "#472C18", INK = "#2B1D14";
+
+function body(opts: { top: string; bottom: string; legs?: string; arms?: string }): { back: string; front: string } {
+  const legs = `<g class="leg leg-l"><rect x="23" y="70" width="6" height="22" rx="3" fill="${opts.legs ?? SKIN_D}"/><ellipse cx="25" cy="93" rx="5" ry="2.6" fill="${INK}"/></g>
+    <g class="leg leg-r"><rect x="31" y="70" width="6" height="22" rx="3" fill="${opts.legs ?? SKIN}"/><ellipse cx="35" cy="93" rx="5" ry="2.6" fill="${INK}"/></g>`;
+  return {
+    back: legs,
+    front: `${opts.bottom}${opts.top}
+      <g class="arm arm-l"><rect x="13" y="38" width="6" height="24" rx="3" fill="${opts.arms ?? SKIN}"/></g>
+      <rect x="27" y="26" width="6" height="7" fill="${SKIN}"/>
+      <circle cx="30" cy="20" r="9.5" fill="${SKIN}"/>
+      <circle cx="27" cy="19" r="1.1" fill="${INK}"/><circle cx="33" cy="19" r="1.1" fill="${INK}"/>
+      <path d="M27 24 q3 2 6 0" stroke="${INK}" stroke-width="1" fill="none" stroke-linecap="round"/>`,
+  };
+}
+
+const beadRow = (cx: number, cy: number, r: number, cols: string[], n = 9) => Array.from({ length: n }, (_, i) => {
+  const a = Math.PI * (0.15 + 0.7 * (i / (n - 1)));
+  return `<circle cx="${(cx - r * Math.cos(a)).toFixed(1)}" cy="${(cy + r * Math.sin(a) * 0.7).toFixed(1)}" r="1.6" fill="${cols[i % cols.length]}"/>`;
+}).join("");
+
+const beadLine = (y: number, cols: string[], n = 7) =>
+  Array.from({ length: n }, (_, i) => `<circle cx="${(21.5 + (17 * i) / (n - 1)).toFixed(1)}" cy="${y}" r="1.1" fill="${cols[i % cols.length]}"/>`).join("");
+
+export const GUIDES: Record<string, { name: { en: string; sw: string }; note: { en: string; sw: string } }> = {
+  kik: { name: { en: "Your Gĩkũyũ guide", sw: "Kiongozi wako wa Gĩkũyũ" }, note: { en: "Leather cape, beadwork and a woven kiondo basket", sw: "Joho la ngozi, shanga na kiondo kilichofumwa" } },
+  luo: { name: { en: "Your Luo guide", sw: "Kiongozi wako wa Luo" }, note: { en: "Feathered headdress and the nyatiti lyre", sw: "Kofia ya manyoya na kinubi cha nyatiti" } },
+  luy: { name: { en: "Your Luhya guide", sw: "Kiongozi wako wa Luhya" }, note: { en: "Dancing in bright colours with an isukuti drum", sw: "Mavazi ya rangi na ngoma ya isukuti" } },
+  kam: { name: { en: "Your Kamba guide", sw: "Kiongozi wako wa Kamba" }, note: { en: "Beaded headband and a carved walking stick", sw: "Utepe wa shanga na fimbo iliyochongwa" } },
+  kln: { name: { en: "Your Kalenjin guide", sw: "Kiongozi wako wa Kalenjin" }, note: { en: "Beaded leather cape and a sotet gourd for mursik", sw: "Joho la ngozi lenye shanga na kibuyu cha mursik" } },
+};
+
+export function guideFigure(guide: string, size = 64): string {
+  let back = "", front = "", extraBack = "", extraFront = "";
+  if (guide === "kik") {
+    const b = body({
+      top: `<path d="M17 33 Q30 28 43 33 L46 62 Q30 66 14 62 Z" fill="#9C5B2E"/>
+            <path d="M18 60 v4 M22 61 v4 M26 62 v4 M30 62 v4 M34 62 v4 M38 61 v4 M42 60 v4" stroke="#6E3E1C" stroke-width="1.2"/>
+            ${beadRow(30, 30, 8, ["#B8322A", "#EDE6D6", "#2456A4"], 11)}${beadRow(30, 33, 10, ["#E2A21B", "#B8322A"], 11)}`,
+      bottom: `<path d="M19 60 L41 60 L43 74 L17 74 Z" fill="#7A4421"/>`,
+    });
+    back = b.back; front = b.front;
+    // kiondo basket carried on the back, strap across the forehead
+    extraBack = `<g transform="translate(40 30) rotate(12)"><path d="M0 0 h16 l-2 26 h-12 Z" fill="#C79A4B" stroke="${INK}" stroke-width="1"/>
+      <path d="M1 7 h14 M1.5 13 h13 M2 19 h12" stroke="#B8322A" stroke-width="2"/><path d="M1 10 h14 M2 16 h12" stroke="#2E6B5E" stroke-width="1.4"/></g>`;
+    extraFront = `<path d="M20.5 13 Q30 8.5 39.5 13" stroke="#8E6B33" stroke-width="3" fill="none"/>${beadLine(12, ["#B8322A", "#EDE6D6"], 7).replace(/cy="12"/g, 'cy="11.6"')}`;
+  } else if (guide === "luo") {
+    const b = body({
+      top: `<path d="M17 33 Q30 29 43 33 L44 60 L16 60 Z" fill="#EDE6D6"/><path d="M17 33 Q30 29 43 33 L42 44 L18 44 Z" fill="#2A2320"/>
+            <path d="M18 44 h24" stroke="#B8322A" stroke-width="2"/>`,
+      bottom: `<path d="M17 58 L43 58 L45 74 L15 74 Z" fill="#B8322A"/><path d="M17 62 h26 M16 67 h28" stroke="#2A2320" stroke-width="1.4"/>`,
+    });
+    back = b.back; front = b.front;
+    // feathered headdress
+    extraFront = `${[-50, -30, -12, 6, 24, 42].map((a, i) => `<ellipse cx="30" cy="2" rx="3.2" ry="10" fill="${i % 2 ? "#F4F1EA" : "#1E1A17"}" stroke="${INK}" stroke-width=".5" transform="rotate(${a} 30 14)"/>`).join("")}
+      <rect x="21" y="10" width="18" height="4" rx="2" fill="#B8322A"/>${beadLine(12, ["#EDE6D6", "#2456A4"], 7)}`;
+    // nyatiti lyre held at the side
+    extraBack = `<g transform="translate(-4 44) rotate(-10)"><path d="M2 0 L14 0 L12 28 L4 28 Z" fill="none" stroke="#7A4E22" stroke-width="2.4"/>
+      <ellipse cx="8" cy="28" rx="7" ry="4" fill="#A8693A" stroke="${INK}" stroke-width=".8"/>
+      <path d="M5 2 v24 M8 1 v25 M11 2 v24" stroke="#EDE6D6" stroke-width=".6"/></g>`;
+  } else if (guide === "luy") {
+    const b = body({
+      top: `<path d="M16 33 Q30 28 44 33 L45 60 L15 60 Z" fill="#E2A21B"/>
+            <path d="M16 40 h29 M15.5 47 h29.5 M15 54 h30" stroke="#B8322A" stroke-width="3"/>
+            <path d="M22 33 l8 8 l8 -8" fill="none" stroke="#2456A4" stroke-width="2"/>`,
+      bottom: `<path d="M17 58 L43 58 L44 74 L16 74 Z" fill="#2E2621"/>`,
+    });
+    back = b.back; front = b.front;
+    extraFront = `<rect x="20" y="10" width="20" height="4" rx="2" fill="#B8322A"/><path d="M36 10 q4 -10 10 -12" stroke="#1E1A17" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M33 10 q2 -9 6 -12" stroke="#F4F1EA" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+    // isukuti drum slung at the hip
+    extraBack = `<g transform="translate(38 46) rotate(-25)"><rect x="0" y="0" width="10" height="30" rx="3" fill="#8E5530" stroke="${INK}" stroke-width="1"/>
+      <ellipse cx="5" cy="0" rx="5" ry="2" fill="#EDE6D6" stroke="${INK}" stroke-width=".8"/><path d="M0 8 l10 6 M0 16 l10 6" stroke="#E2A21B" stroke-width="1"/></g>`;
+  } else if (guide === "kam") {
+    const b = body({
+      top: `<path d="M17 33 Q30 28 43 33 L45 74 L15 74 Z" fill="#2456A4"/>
+            <path d="M16 46 h28 M15.5 60 h29" stroke="#E2A21B" stroke-width="2.4"/>
+            <circle cx="22" cy="53" r="2" fill="#E2A21B"/><circle cx="30" cy="53" r="2" fill="#E2A21B"/><circle cx="38" cy="53" r="2" fill="#E2A21B"/>
+            ${beadRow(30, 30, 8, ["#B8322A", "#EDE6D6"], 11)}${beadRow(30, 33, 10, ["#B8322A", "#EDE6D6"], 11)}`,
+      bottom: ``,
+    });
+    back = b.back; front = b.front;
+    extraFront = `<rect x="20" y="10" width="20" height="4" rx="2" fill="#EDE6D6"/>${beadLine(12, ["#B8322A", "#2456A4", "#E2A21B"], 7)}`;
+    // carved walking stick
+    extraBack = `<g transform="translate(9 26)"><rect x="0" y="0" width="3" height="68" rx="1.5" fill="#7A4E22"/>
+      <circle cx="1.5" cy="-1" r="3.5" fill="#5A3B28"/><path d="M0 10 h3 M0 14 h3 M0 18 h3" stroke="#E2A21B" stroke-width="1"/></g>`;
+  } else {
+    const b = body({
+      top: `<path d="M15 33 Q30 27 45 33 L47 66 Q30 70 13 66 Z" fill="#8A5A32"/>
+            ${[40, 47, 54, 61].map((y) => `<path d="M16 ${y} Q30 ${y + 3} 44 ${y}" stroke="${y % 2 ? "#EDE6D6" : "#B8322A"}" stroke-width="1.6" fill="none" stroke-dasharray="1.5 1.5"/>`).join("")}`,
+      bottom: `<path d="M18 64 L42 64 L43 74 L17 74 Z" fill="#5A3B28"/>`,
+    });
+    back = b.back; front = b.front;
+    // beaded ear ornaments
+    extraFront = `<circle cx="20.5" cy="21" r="3" fill="none" stroke="#B8322A" stroke-width="1.6"/><circle cx="39.5" cy="21" r="3" fill="none" stroke="#2456A4" stroke-width="1.6"/>`;
+    // sotet gourd for mursik, on a leather strap
+    extraBack = `<path d="M24 32 Q34 44 44 50" stroke="#5A3B28" stroke-width="1.4" fill="none"/>
+      <g transform="translate(42 44) rotate(-12)"><path d="M3 0 h4 v4 q5 4 5 14 q0 10 -7 10 q-7 0 -7 -10 q0 -10 5 -14 Z" fill="#C9A15A" stroke="${INK}" stroke-width="1"/>
+      <path d="M0 14 h12" stroke="#B8322A" stroke-width="1.4"/><rect x="2.5" y="-3" width="5" height="3" rx="1" fill="#2A2320"/></g>`;
+  }
+  return `<svg class="guide-svg" width="${size}" height="${size * 1.6}" viewBox="-6 -10 72 106" aria-hidden="true">
+    <ellipse cx="30" cy="94" rx="15" ry="3" fill="#000" opacity=".15"/>
+    ${extraBack}${back}${front}${extraFront}
+  </svg>`;
 }

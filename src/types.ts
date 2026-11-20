@@ -41,8 +41,24 @@ export interface Unit {
   lessons: Lesson[];
 }
 
+/** Short phrases used to build conversations. Missing frames fall back to narration. */
+export interface Frames {
+  whatIs?: Phrase;                   // "What is this?"
+  itIs?: { prefix: string; en: string; sw: string };   // "It is ___" → prefix + noun
+  howMany?: Phrase;                  // "How many?"
+  thanks?: string;                   // item id
+  bye?: string;                      // item id
+  greet?: [question: string, answer: string];   // item ids
+}
+
+export interface Phrase { target: string; english: string; swahili: string; confidence: Confidence }
+
+export type Guide = "kik" | "luo" | "luy" | "kam" | "kln";
+
 export interface Course {
   code: string;
+  guide: Guide;                      // walking figure on the journey
+  frames: Frames;
   family: string;       // groups varieties in the picker, e.g. "Luhya"
   name: string;         // English name, e.g. "Bukusu"
   nativeName: string;
@@ -59,7 +75,16 @@ export type Exercise =
   | { kind: "type"; item: Item }
   | { kind: "listen"; item: Item; options: string[] }
   | { kind: "speak"; item: Item }
-  | { kind: "scene"; scene: Scene; cast: CastMember[]; lines: { who: string; item: Item }[]; answer: Item; options: string[] };
+  | { kind: "scene"; scene: Scene; cast: CastMember[]; lines: { who: string; item: Item }[]; answer: Item; options: string[] }
+  | { kind: "convo"; title: { en: string; sw: string }; setting: { en: string; sw: string }; cast: CastMember[]; turns: Turn[]; big: boolean };
+
+/** One line in a conversation. `item` is either a real lesson item or a composed phrase. */
+export interface Line { target: string; english: string; swahili: string; item?: Item }
+
+export type Turn =
+  | { type: "say"; who: string; line: Line }                      // a character speaks
+  | { type: "narrate"; text: { en: string; sw: string }; cue?: string }
+  | { type: "reply"; cue?: string; prompt?: { en: string; sw: string }; answer: Line; options: string[] };
 
 export interface ItemStat {
   seen: number;
@@ -82,6 +107,7 @@ export interface Progress {
   dailyGoal: number;
   settings: { speaking: boolean; voiceFallback: boolean; speakSnoozeUntil: number };
   tests: Record<string, number>;        // unitId -> best test score (0..100)
+  partial: Record<string, number>;      // stepId -> fraction of an unfinished lesson/conversation (0..1)
   updatedAt: number;
 }
 

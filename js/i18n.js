@@ -51,6 +51,8 @@ const STR = {
         approxNote: "Approximate computer voice. Native recordings are coming.",
         snoozed: "Speaking is paused for an hour.", on: "On", off: "Off",
         listenSlow: "Play slowly", playSound: "Play sound",
+        talkDone: "Conversation complete!", talkNode: "Conversation", legNode: "By the fire", youAreHere: "You are here",
+        talkLocked: "Finish this stop's lessons first",
     },
     sw: {
         safari: "Safari", kisima: "Kisima", boma: "Boma", review: "Kagua",
@@ -104,6 +106,8 @@ const STR = {
         approxNote: "Sauti ya kompyuta ya kukadiria. Rekodi za wazawa zinakuja.",
         snoozed: "Kuongea kumesimamishwa kwa saa moja.", on: "Washa", off: "Zima",
         listenSlow: "Cheza polepole", playSound: "Cheza sauti",
+        talkDone: "Mazungumzo yamekamilika!", talkNode: "Mazungumzo", legNode: "Kando ya moto", youAreHere: "Uko hapa",
+        talkLocked: "Maliza masomo ya kituo hiki kwanza",
     },
 };
 let lang = "en";

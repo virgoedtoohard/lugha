@@ -1,4 +1,5 @@
-import { bead, boma, BOMA_PIECES, calabash, hearth, necklace, road } from "./art.js";
+import { bead, beadsIcon, boma, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
+import { legConvo, miniConvo, stopConvo } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
 import { generateLesson, generatePractice, generateTest, sceneExercise } from "./exercises.js";
@@ -10,7 +11,7 @@ import * as speech from "./speech.js";
 import {
   allItems, allLessons, courseCompletion, findItem, getCourse, getCourses, getProgress, isUnlocked, MAX_HEARTS,
   mergeProgress, msToNextHeart, onProgressChange, resetLocalProgress, saveProgress, setActiveCourse, setBase,
-  setDailyGoal, setOverrides, setSetting, speakingActive, todayXp, unitDone, unitsDone, weakItems,
+  isDone as isDoneStep, position, setDailyGoal, setOverrides, setSetting, speakingActive, steps, todayXp, unitDone, unitsDone, weakItems,
 } from "./store.js";
 import type { BaseLang, Course, Item } from "./types.js";
 import { $, $$, app, esc, fmtDuration, toast } from "./ui.js";
@@ -32,6 +33,7 @@ function route(): void {
   if (view === "home" || (!view && !p.activeCourse)) return renderHome(app(), route);
   if (view === "lesson" && arg) return openLesson(arg);
   if (view === "test" && arg) return openTest(arg);
+  if (view === "talk" && arg) return openTalk(arg);
   if (view === "kisima" && arg === "go") return openPractice();
   if (view === "courses" || (!p.activeCourse && view !== "boma" && view !== "review")) return page("courses", renderCourses);
   if (view === "kisima") return page("kisima", renderWell);
@@ -53,7 +55,7 @@ function topBar(): string {
   return `
   <header class="topbar">
     <div class="top-left">
-      <a class="top-brand" href="#/home" aria-label="Lugha home">${bead("#B8322A", 20)}</a>
+      <a class="top-brand" href="#/home" aria-label="${getLang() === "sw" ? "Nyumbani" : "Home"}" title="${getLang() === "sw" ? "Nyumbani" : "Home"}">${hutIcon(36)}</a>
       <a class="course-pill" href="#/courses">${esc(label)} ▾</a>
     </div>
     <div class="top-stats">
@@ -70,7 +72,7 @@ function bottomNav(active: string): string {
   const tabs: [string, string, string][] = [
     ["safari", "🧭", t("safari")],
     ["kisima", "🪣", t("kisima")],
-    ["boma", "🛖", t("boma")],
+    ["boma", beadsIcon(26), t("boma")],
     ...(u && u.role !== "learner" ? [["review", "✍🏾", t("review")] as [string, string, string]] : []),
   ];
   return `<nav class="bottomnav">${tabs.map(([id, ic, label]) =>
@@ -140,7 +142,20 @@ function renderSafari(root: HTMLElement): void {
   const p = getProgress();
   const course = getCourse(p.activeCourse!)!;
   const goalPct = Math.min(100, Math.round((todayXp() / p.dailyGoal) * 100));
-  const nextId = allLessons(course).find((l) => !p.completed[l.id])?.id;
+  const all = steps(course);
+  const here = position(course);
+  const guide = GUIDES[course.guide];
+
+  // walker placement: which unit, which node on that unit's road, how far toward the next
+  let walker: { unitId: string; k: number; f: number } | null = null;
+  if (here.step) {
+    const route = all.filter((s) => s.unit === here.step!.unit);
+    walker = { unitId: here.step.unit.id, k: route.findIndex((s) => s.id === here.step!.id), f: here.fraction };
+  } else {
+    const lastU = course.units[course.units.length - 1];
+    walker = { unitId: lastU.id, k: all.filter((s) => s.unit === lastU).length - 1, f: 1 };
+  }
+  const roads: Record<string, ReturnType<typeof road>> = {};
 
   root.innerHTML = `
   <section class="page safari">
@@ -148,14 +163,23 @@ function renderSafari(root: HTMLElement): void {
       <div class="goal-head"><b>${t("todayBeads")}</b><span class="muted small">${todayXp()} / ${p.dailyGoal}</span></div>
       <div class="bar"><div class="bar-fill gold" style="width:${goalPct}%"></div></div>
     </div>
-    <h1 class="journey-title">${esc(course.nativeName)}${course.name !== course.nativeName && course.name !== "General" ? ` <span class="muted">· ${esc(course.name)}</span>` : ""}</h1>
-    <p class="muted small">${esc(course.speakers)}</p>
+    <div class="journey-head">
+      <div class="guide-badge">${guideFigure(course.guide, 34)}</div>
+      <div>
+        <h1 class="journey-title">${esc(course.nativeName)}${course.name !== course.nativeName && course.name !== "General" ? ` <span class="muted">· ${esc(course.name)}</span>` : ""}</h1>
+        <p class="muted small">${esc(L(guide.name))} · ${esc(L(guide.note))}</p>
+      </div>
+    </div>
     ${course.units.map((u, ui) => {
-      const r = road(u.lessons.length + 1);
-      const gateOpen = isUnlocked(course, u.lessons[0].id);
-      const best = p.tests[u.id];
-      const gpt = r.pts[u.lessons.length];
+      const route = all.filter((s) => s.unit === u);
+      const r = road(route.length);
+      roads[u.id] = r;
       const done = unitDone(u);
+      const best = p.tests[u.id];
+      const gateOpen = isUnlocked(course, u.lessons[0].id);
+      const talkIdx = route.findIndex((s) => s.kind === "talk");
+      const tp = r.pts[talkIdx];
+      const gx = tp.x > 50 ? tp.x - 34 : tp.x + 34;
       return `
       <div class="stop">
         <div class="signpost" style="--bead:${u.bead}">
@@ -164,22 +188,26 @@ function renderSafari(root: HTMLElement): void {
           <span class="post-unit">${t("unit")} ${ui + 1} · ${esc(L(u.title))}</span></div>
           ${done ? `<span class="post-done">${bead(u.bead, 22)}</span>` : ""}
         </div>
-        <div class="route" style="height:${110 * (u.lessons.length + 1) + 30}px">
+        <div class="route" data-unit="${u.id}" style="height:${r.height}px">
           ${r.svg}
-          ${u.lessons.map((l, li) => {
-            const isDone = (p.completed[l.id] ?? 0) > 0;
-            const open = isUnlocked(course, l.id);
-            const cls = isDone ? "done" : l.id === nextId ? "next" : open ? "open" : "locked";
-            const pt = r.pts[li];
-            return `<a class="node ${cls}" style="left:${pt.x}%;top:${pt.y}%;--bead:${u.bead}" ${open ? `href="#/lesson/${l.id}"` : `aria-disabled="true"`}>
-              <span class="node-dot">${isDone ? "✓" : open ? (l.scene ? "📖" : li + 1) : "🔒"}</span>
-              <span class="node-label">${esc(L(l.title))}</span>
+          ${route.map((s, si) => {
+            const isDone = isDoneStep(s.id);
+            const open = isUnlocked(course, s.id);
+            const cls = isDone ? "done" : s.id === here.step?.id ? "next" : open ? "open" : "locked";
+            const pt = r.pts[si];
+            const icon = isDone ? "✓" : !open ? "🔒" : s.kind === "talk" ? "💬" : s.kind === "leg" ? "🔥" : String(u.lessons.indexOf(s.lesson!) + 1);
+            const label = s.kind === "lesson" ? L(s.lesson!.title) : s.kind === "talk" ? t("talkNode") : t("legNode");
+            const href = s.kind === "lesson" ? `#/lesson/${s.id}` : `#/talk/${s.id}`;
+            return `<a class="node k-${s.kind} ${cls}" style="left:${pt.x}%;top:${pt.y}%;--bead:${u.bead}" ${open ? `href="${href}"` : `aria-disabled="true"`}>
+              <span class="node-dot">${icon}</span>
+              <span class="node-label">${esc(label)}</span>
             </a>`;
           }).join("")}
-          <a class="node gate ${best !== undefined && best >= 80 ? "done" : gateOpen ? "open" : "locked"}" style="left:${gpt.x}%;top:${gpt.y}%;--bead:${u.bead}" ${gateOpen ? `href="#/test/${u.id}"` : `aria-disabled="true"`}>
+          <a class="node gate side ${best !== undefined && best >= 80 ? "done" : gateOpen ? "open" : "locked"}" style="left:${gx}%;top:${tp.y}%;--bead:${u.bead}" ${gateOpen ? `href="#/test/${u.id}"` : `aria-disabled="true"`}>
             <span class="node-dot">${gateOpen ? "🏁" : "🔒"}</span>
-            <span class="node-label">${t("gateTest")}${best !== undefined ? ` · ${t("bestScore", { s: best })}` : ""}</span>
+            <span class="node-label">${t("gateTest")}${best !== undefined ? ` · ${best}%` : ""}</span>
           </a>
+          ${walker && walker.unitId === u.id ? `<div class="walker" id="walker" title="${t("youAreHere")}">${guideFigure(course.guide, 40)}<span class="here-tag">${t("youAreHere")}</span></div>` : ""}
         </div>
       </div>`;
     }).join("")}
@@ -189,6 +217,48 @@ function renderSafari(root: HTMLElement): void {
     </div>
     <div class="card dialect"><b>${t("aboutCourse")}:</b> ${esc(course.dialectNote)}</div>
   </section>`;
+
+  if (walker) placeWalker(course.code, walker, roads[walker.unitId]);
+}
+
+/** Put the guide on the road; if they've moved on since last time, walk them there along the road. */
+function placeWalker(code: string, w: { unitId: string; k: number; f: number }, r: ReturnType<typeof road>): void {
+  const el = document.getElementById("walker");
+  if (!el || !r) return;
+  const set = (k: number, f: number) => {
+    const pt = r.between(k, f);
+    // walk along the roadside, so the guide never hides a stop
+    const side = pt.x > 30 ? -1 : 1;
+    const shift = side * 15;
+    el.style.left = `${pt.x + shift}%`;
+    el.style.top = `${pt.y}%`;
+  };
+  const key = "lugha.walker";
+  let prev: { code: string; unitId: string; k: number; f: number } | null = null;
+  try { prev = JSON.parse(sessionStorage.getItem(key) ?? "null"); } catch { /* ignore */ }
+  try { sessionStorage.setItem(key, JSON.stringify({ code, ...w })); } catch { /* ignore */ }
+
+  const to = w.k + w.f;
+  let from = to;
+  if (prev && prev.code === code) {
+    if (prev.unitId === w.unitId && prev.k + prev.f < to) from = prev.k + prev.f;
+    else if (prev.unitId !== w.unitId) from = -1;              // arriving at a new stop: walk in from the top
+  }
+  set(Math.floor(from), from - Math.floor(from));
+  requestAnimationFrame(() => el.scrollIntoView({ block: "center", behavior: from === to ? "auto" : "smooth" }));
+  if (from === to) return;
+  el.classList.add("walking");
+  const dur = Math.min(2600, 700 + (to - from) * 900);
+  const t0 = performance.now();
+  const tick = (now: number) => {
+    const q = Math.min(1, (now - t0) / dur);
+    const e = q < .5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
+    const v = from + (to - from) * e;
+    const k = Math.min(Math.floor(v), Math.max(w.k, -1));
+    set(k, Math.min(1, v - k));
+    if (q < 1) requestAnimationFrame(tick); else el.classList.remove("walking");
+  };
+  setTimeout(() => requestAnimationFrame(tick), 350);
 }
 
 // ---------- Kisima (the well / practice) ----------
@@ -327,6 +397,10 @@ function wireAccount(): void {
 }
 
 // ---------- Sessions ----------
+function goSafari(): void {
+  if (location.hash === "#/safari") route(); else location.hash = "#/safari";
+}
+
 function openLesson(lessonId: string): void {
   const p = getProgress();
   const course = getCourse(p.activeCourse ?? "");
@@ -335,18 +409,35 @@ function openLesson(lessonId: string): void {
   if (!course || !u || !lesson || !isUnlocked(course, lessonId)) { location.hash = "#/safari"; return; }
   document.body.classList.add("in-lesson");
   const pool = allItems(course);
-  const story = lesson.scene ? sceneExercise(lesson.scene, course.cast, (id) => findItem(course, id), [...lesson.items, ...pool]) : null;
+  const story = miniConvo(course, u, lesson);
   startSession({
     mode: "lesson", course, lessonId,
     title: `${u.place} · ${L(lesson.title)}`,
     bead: u.bead,
     exercises: generateLesson(lesson.items, pool, { story, speak: canSpeakNow(), realAudio: realAudio(course) }),
-    onExit: () => { location.hash = "#/safari"; route(); },
+    onExit: goSafari,
   });
 }
 
 const canSpeakNow = () => speakingActive() && (speech.canRecognize() || speech.canRecord());
 const realAudio = (course: Course) => (i: Item) => { const src = audio.sourceFor(i, course.code); return src === "recorded" || src === "generated"; };
+
+function openTalk(stepId: string): void {
+  const p = getProgress();
+  const course = getCourse(p.activeCourse ?? "");
+  const st = course && steps(course).find((x) => x.id === stepId);
+  if (!course || !st || st.kind === "lesson" || !isUnlocked(course, stepId)) { location.hash = "#/safari"; return; }
+  document.body.classList.add("in-lesson");
+  const ex = st.kind === "talk" ? stopConvo(course, st.unit) : legConvo(course, st.leg!);
+  startSession({
+    mode: "talk", course, lessonId: stepId, unit: st.unit,
+    title: L((ex as { title: { en: string; sw: string } }).title),
+    bead: st.unit.bead,
+    exercises: [ex],
+    award: st.kind === "leg" ? 30 : 20,
+    onExit: goSafari,
+  });
+}
 
 function openTest(unitId: string): void {
   const p = getProgress();
@@ -371,7 +462,7 @@ function openTest(unitId: string): void {
         title: `${t("gateTest")} · ${u.place}`,
         bead: u.bead,
         exercises: generateTest(items, allItems(course), { speak: canSpeakNow(), realAudio: realAudio(course) }),
-        onExit: () => { location.hash = "#/safari"; route(); },
+        onExit: goSafari,
       });
     });
   });

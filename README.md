@@ -11,6 +11,13 @@ A phone-first web app for learning Gĩkũyũ, Dholuo, Luhya, Kĩkamba and Kalenj
 - **Story scenes:** recurring characters (a grandmother, a friend, a market seller, a matatu conductor) speak to you, and you pick the right reply. Tap a speech bubble's blurred line to reveal its meaning.
 - **English or Kiswahili:** learners choose which language they learn through, and the whole interface switches with it.
 
+**Conversations and your guide**
+- **After every lesson:** a short conversation with one of the characters, using that lesson's words.
+- **After every stop:** a longer conversation (💬 on the road) using everything from that stop. You must finish it before moving on.
+- **After every leg of the journey** (about three stops): a fireside conversation (🔥) with the grandmother, covering everything learned so far.
+- Conversations use the course's own phrases ("What is this?", "How many?") where we have them, and pictures (🍌🍌🍌, 🐐) as prompts. Where a language has no checked phrase yet, the question is told in English or Kiswahili instead, so no grammar is invented.
+- **Your guide:** a walking figure in dress associated with the community moves along the road and stands exactly where you are, even part-way through a lesson. Gĩkũyũ: leather cape, beadwork and a kiondo basket. Luo: feathered headdress and nyatiti lyre. Luhya: bright colours and an isukuti drum. Kamba: beaded headband and a carved walking stick. Kalenjin: beaded leather cape and a sotet gourd for mursik. These are stylised illustrations, so have community members check them.
+
 **Hearing and speaking**
 - **Pronunciation:** tap 🔊 on any word, or 🐢 to hear it slowly. Story scenes are read aloud line by line. Each word plays the best audio available:
   1. a native-speaker recording that a reviewer uploaded in the Review panel;
@@ -25,7 +32,14 @@ How speech checking works: no speech recogniser exists yet for these languages, 
 **Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Nyore) and Kalenjin (General, Kipsigis, Nandi).
 
 **What's in it**
-- **Hearing and speaking**
+- **Conversations and your guide**
+- **After every lesson:** a short conversation with one of the characters, using that lesson's words.
+- **After every stop:** a longer conversation (💬 on the road) using everything from that stop. You must finish it before moving on.
+- **After every leg of the journey** (about three stops): a fireside conversation (🔥) with the grandmother, covering everything learned so far.
+- Conversations use the course's own phrases ("What is this?", "How many?") where we have them, and pictures (🍌🍌🍌, 🐐) as prompts. Where a language has no checked phrase yet, the question is told in English or Kiswahili instead, so no grammar is invented.
+- **Your guide:** a walking figure in dress associated with the community moves along the road and stands exactly where you are, even part-way through a lesson. Gĩkũyũ: leather cape, beadwork and a kiondo basket. Luo: feathered headdress and nyatiti lyre. Luhya: bright colours and an isukuti drum. Kamba: beaded headband and a carved walking stick. Kalenjin: beaded leather cape and a sotet gourd for mursik. These are stylised illustrations, so have community members check them.
+
+**Hearing and speaking**
 - **Pronunciation:** tap 🔊 on any word, or 🐢 to hear it slowly. Story scenes are read aloud line by line. Each word plays the best audio available:
   1. a native-speaker recording that a reviewer uploaded in the Review panel;
   2. a generated voice file (see "Generate pronunciation audio" below);

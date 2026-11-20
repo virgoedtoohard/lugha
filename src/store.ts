@@ -1,4 +1,5 @@
 import { COURSES } from "./content.js";
+import { legs } from "./convo.js";
 import type { BaseLang, ContentOverride, Course, Item, Lesson, Progress, Unit } from "./types.js";
 
 const PROGRESS_KEY = "lugha.progress.v1";
@@ -38,6 +39,7 @@ export function freshProgress(): Progress {
     dailyGoal: 20,
     settings: { speaking: true, voiceFallback: true, speakSnoozeUntil: 0 },
     tests: {},
+    partial: {},
     updatedAt: 0,
   };
 }
@@ -60,6 +62,7 @@ function load(): Progress {
     const p = { ...fresh, ...JSON.parse(raw) } as Progress;
     p.settings = { ...fresh.settings, ...(p.settings ?? {}) };
     p.tests = p.tests ?? {};
+    p.partial = p.partial ?? {};
     return p;
   } catch {
     return freshProgress();
@@ -160,8 +163,8 @@ export function recordAnswer(itemId: string, correct: boolean): void {
   // persisted with the next mutate (lesson end) to avoid excess writes
 }
 
-export function completeLesson(lessonId: string): void {
-  mutate((p) => { p.completed[lessonId] = (p.completed[lessonId] ?? 0) + 1; });
+export function completeLesson(stepId: string): void {
+  mutate((p) => { p.completed[stepId] = (p.completed[stepId] ?? 0) + 1; delete p.partial[stepId]; });
 }
 
 export function setActiveCourse(code: string | null): void {
@@ -216,6 +219,7 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
   const aDay = a.lastActiveDay ?? "", bDay = b.lastActiveDay ?? "";
   if (aDay === bDay) merged.streak = Math.max(a.streak, b.streak);
   else { const later = aDay > bDay ? a : b; merged.streak = later.streak; merged.lastActiveDay = later.lastActiveDay; }
+  merged.partial = { ...(newer.partial ?? {}) };
   merged.tests = { ...(a.tests ?? {}) };
   for (const [k, v] of Object.entries(b.tests ?? {})) merged.tests[k] = Math.max(merged.tests[k] ?? 0, v);
   merged.settings = { ...freshProgress().settings, ...(newer.settings ?? {}) };
@@ -278,15 +282,50 @@ export function allItems(course: Course): Item[] {
   return allLessons(course).flatMap((l) => l.items);
 }
 
-export function isUnlocked(course: Course, lessonId: string): boolean {
-  const lessons = allLessons(course);
-  const idx = lessons.findIndex((l) => l.id === lessonId);
+// ---------- The journey as an ordered list of steps ----------
+export interface Step { id: string; kind: "lesson" | "talk" | "leg"; unit: Unit; lesson?: Lesson; leg?: Unit[] }
+
+export const talkId = (u: Unit) => `${u.id}-talk`;
+
+/** Lessons, then the stop's conversation; after the last stop of a leg, the fireside conversation. */
+export function steps(course: Course): Step[] {
+  const out: Step[] = [];
+  const legList = legs(course);
+  for (const u of course.units) {
+    for (const l of u.lessons) out.push({ id: l.id, kind: "lesson", unit: u, lesson: l });
+    out.push({ id: talkId(u), kind: "talk", unit: u });
+    const li = legList.findIndex((g) => g[g.length - 1] === u);
+    if (li >= 0) out.push({ id: `${course.code}-leg${li + 1}`, kind: "leg", unit: u, leg: legList[li] });
+  }
+  return out;
+}
+
+export const isDone = (stepId: string) => (progress.completed[stepId] ?? 0) > 0;
+
+export function isUnlocked(course: Course, stepId: string): boolean {
+  const all = steps(course);
+  const idx = all.findIndex((s) => s.id === stepId);
   if (idx <= 0) return true;
-  return (progress.completed[lessons[idx - 1].id] ?? 0) > 0;
+  return isDone(all[idx - 1].id);
+}
+
+/** Where the learner is: the first unfinished step, and how far through it they got. */
+export function position(course: Course): { index: number; step: Step | undefined; fraction: number } {
+  const all = steps(course);
+  const index = all.findIndex((s) => !isDone(s.id));
+  const step = index >= 0 ? all[index] : undefined;
+  return { index: index >= 0 ? index : all.length, step, fraction: step ? Math.min(0.95, progress.partial[step.id] ?? 0) : 0 };
+}
+
+export function setPartial(stepId: string, fraction: number): void {
+  if ((progress.partial[stepId] ?? 0) >= fraction) return;
+  progress.partial[stepId] = fraction;
+  progress.updatedAt = Date.now();
+  saveProgress(progress, false);
 }
 
 export function unitDone(u: Unit): boolean {
-  return u.lessons.every((l) => (progress.completed[l.id] ?? 0) > 0);
+  return u.lessons.every((l) => isDone(l.id)) && isDone(talkId(u));
 }
 
 export function unitsDone(course: Course): number {
@@ -298,9 +337,8 @@ export function findItem(course: Course, id: string): Item | undefined {
 }
 
 export function courseCompletion(course: Course): number {
-  const lessons = allLessons(course);
-  const done = lessons.filter((l) => (progress.completed[l.id] ?? 0) > 0).length;
-  return lessons.length ? done / lessons.length : 0;
+  const all = steps(course);
+  return all.length ? all.filter((s) => isDone(s.id)).length / all.length : 0;
 }
 
 // Items the learner gets wrong most, for Practice mode
