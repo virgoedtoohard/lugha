@@ -48,11 +48,12 @@ const STR = {
         testPassed: "Gate opened!", testFailed: "Not this time", testScore: "Score {s}%", needScore: "You need 80% to pass. Try again whenever you're ready.",
         startTest: "Start the test", bestScore: "Best: {s}%",
         speakingSetting: "Speaking exercises", voiceSetting: "Computer voice when no recording exists",
-        approxNote: "Approximate computer voice. Native recordings are coming.",
+        approxNote: "Computer voice, an approximation until native speakers record this.",
         snoozed: "Speaking is paused for an hour.", on: "On", off: "Off",
         listenSlow: "Play slowly", playSound: "Play sound",
         talkDone: "Conversation complete!", talkNode: "Conversation", legNode: "By the fire", youAreHere: "You are here",
         talkLocked: "Finish this stop's lessons first",
+        tapToHear: "Tap any line to hear it", noVoice: "To hear the lines, add a Kiswahili voice to your phone (Settings › Text-to-speech) or open Lugha in Microsoft Edge.",
     },
     sw: {
         safari: "Safari", kisima: "Kisima", boma: "Boma", review: "Kagua",
@@ -103,11 +104,12 @@ const STR = {
         testPassed: "Lango limefunguka!", testFailed: "Si wakati huu", testScore: "Alama {s}%", needScore: "Unahitaji 80% ili kupita. Jaribu tena ukiwa tayari.",
         startTest: "Anza mtihani", bestScore: "Bora: {s}%",
         speakingSetting: "Mazoezi ya kuongea", voiceSetting: "Sauti ya kompyuta pasipo rekodi",
-        approxNote: "Sauti ya kompyuta ya kukadiria. Rekodi za wazawa zinakuja.",
+        approxNote: "Sauti ya kompyuta, makadirio hadi wazawa warekodi hili.",
         snoozed: "Kuongea kumesimamishwa kwa saa moja.", on: "Washa", off: "Zima",
         listenSlow: "Cheza polepole", playSound: "Cheza sauti",
         talkDone: "Mazungumzo yamekamilika!", talkNode: "Mazungumzo", legNode: "Kando ya moto", youAreHere: "Uko hapa",
         talkLocked: "Maliza masomo ya kituo hiki kwanza",
+        tapToHear: "Gusa mstari wowote uusikie", noVoice: "Ili kusikia mistari, weka sauti ya Kiswahili kwenye simu yako (Mipangilio › Maandishi-kwa-sauti) au fungua Lugha kwenye Microsoft Edge.",
     },
 };
 let lang = "en";

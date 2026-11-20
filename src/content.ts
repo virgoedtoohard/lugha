@@ -41,10 +41,10 @@ function scene(setting: T, ...lines: [who: string, item: string][]): Scene {
 
 function cast(elder: [string, string], friend: string, seller: string, conductor: string, elderRole = tr("Grandmother", "Bibi")): CastMember[] {
   return [
-    { key: "elder", name: elder[0], role: elderRole, avatar: elder[1] },
-    { key: "friend", name: friend, role: tr("Friend", "Rafiki"), avatar: "🧑🏾" },
-    { key: "seller", name: seller, role: tr("Market seller", "Muuzaji sokoni"), avatar: "👩🏾‍🌾" },
-    { key: "conductor", name: conductor, role: tr("Matatu conductor", "Kondakta wa matatu"), avatar: "👨🏾" },
+    { key: "elder", name: elder[0], role: elderRole, avatar: elder[1], voice: { gender: "f", age: "old" } },
+    { key: "friend", name: friend, role: tr("Friend", "Rafiki"), avatar: "🧑🏾", voice: { gender: "m", age: "young" } },
+    { key: "seller", name: seller, role: tr("Market seller", "Muuzaji sokoni"), avatar: "👩🏾‍🌾", voice: { gender: "f", age: "adult" } },
+    { key: "conductor", name: conductor, role: tr("Matatu conductor", "Kondakta wa matatu"), avatar: "👨🏾", voice: { gender: "m", age: "adult" } },
   ];
 }
 

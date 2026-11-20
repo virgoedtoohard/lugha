@@ -13,11 +13,14 @@ export interface Item {
   confidence: Confidence;
 }
 
+export interface VoiceProfile { gender: "f" | "m"; age: "young" | "adult" | "old" }
+
 export interface CastMember {
   key: string;
   name: string;
   role: { en: string; sw: string };
   avatar: string;       // emoji
+  voice: VoiceProfile;  // how their lines sound when played
 }
 
 /** A short conversation that ends with the learner choosing the right reply. */

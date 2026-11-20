@@ -7,7 +7,7 @@ import {
   addXp, completeLesson, gainHeart, getProgress, loseHeart, MAX_HEARTS, msToNextHeart, recordAnswer, recordTest,
   saveProgress, setPartial, snoozeSpeaking, speakingActive,
 } from "./store.js";
-import type { Course, Exercise, Item, Line, Turn, Unit } from "./types.js";
+import type { CastMember, Course, Exercise, Item, Line, Turn, Unit, VoiceProfile } from "./types.js";
 import { $, $$, app, esc, fmtDuration, toast } from "./ui.js";
 
 type Mode = "lesson" | "practice" | "test" | "talk";
@@ -44,6 +44,25 @@ export function startSession(opts: { mode: Mode; course: Course; unit?: Unit; le
 // ---------- helpers ----------
 const code = () => s!.course.code;
 const playItem = (it: Item, slow = false) => audio.play(it, code(), slow);
+
+// ---------- Tap a line to hear it, in that speaker's voice ----------
+const YOU: VoiceProfile = { gender: "f", age: "adult" };
+const voiceOf = (cast: CastMember[], key: string): VoiceProfile => key === "you" ? YOU : cast.find((c) => c.key === key)?.voice ?? YOU;
+
+/** A spoken line: the words are a button; tapping plays them in the speaker's voice. */
+function lineButton(text: string, canPlay: boolean): string {
+  return canPlay
+    ? `<button class="say-line target-text" aria-label="${esc(t("playSound"))}: ${esc(text)}"><span>${esc(text)}</span><svg class="say-ic" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>`
+    : `<span class="target-text bubble-line">${esc(text)}</span>`;
+}
+
+async function speakIn(el: Element | null, item: Item | undefined, text: string, voice: VoiceProfile): Promise<void> {
+  document.querySelectorAll(".bubble.speaking").forEach((b) => b.classList.remove("speaking"));
+  const bubbleEl = el?.closest(".bubble");
+  bubbleEl?.classList.add("speaking");
+  await audio.play(item, code(), false, voice, text);
+  bubbleEl?.classList.remove("speaking");
+}
 const speakerBtn = (it: Item, id = "speak") =>
   audio.hasAudio(it, code()) ? `<button class="speak" id="${id}" aria-label="${t("playSound")}" title="${audio.sourceFor(it, code()) === "approx" ? t("approxNote") : t("playSound")}">🔊</button>` : "";
 
@@ -152,7 +171,7 @@ function renderExercise(): void {
             return `<div class="bubble-row ${mine ? "mine" : ""}">
               ${mine ? "" : `<span class="avatar" title="${esc(c ? `${c.name} · ${L(c.role)}` : "")}">${c?.avatar ?? "🙂"}</span>`}
               <div class="bubble">${mine ? "" : `<span class="who">${esc(c?.name ?? "")}</span>`}
-                <span class="target-text bubble-line">${esc(l.item.target)} ${audio.hasAudio(l.item, code()) ? `<button class="mini-speak" data-line="${i}" aria-label="${t("playSound")}">🔊</button>` : ""}</span>
+                <span data-line="${i}">${lineButton(l.item.target, audio.hasAudio(l.item, code()))}</span>
                 <button class="peek">${esc(meaning(l.item))}</button>
               </div></div>`;
           }).join("")}
@@ -163,9 +182,15 @@ function renderExercise(): void {
       `, [ex.answer, ...ex.lines.map((l) => l.item)], true);
       selectable(ex.answer.target, ex.answer);
       $$<HTMLButtonElement>(".peek").forEach((b) => b.addEventListener("click", () => b.classList.toggle("shown")));
-      $$<HTMLButtonElement>(".mini-speak").forEach((b) => b.addEventListener("click", () => playItem(ex.lines[+b.dataset.line!].item)));
-      // Play the conversation aloud, line by line
-      void (async () => { for (const l of ex.lines) { if (s?.queue[s.pos] !== ex) return; await playItem(l.item); } })();
+      $$<HTMLElement>("[data-line] .say-line").forEach((b) => b.addEventListener("click", () => {
+        const l = ex.lines[+(b.parentElement as HTMLElement).dataset.line!];
+        void speakIn(b, l.item, l.item.target, voiceOf(ex.cast, l.who));
+      }));
+      // Play the conversation aloud, line by line, each in its speaker's voice
+      void (async () => {
+        const rows = $$<HTMLElement>("[data-line]");
+        for (const [i, l] of ex.lines.entries()) { if (s?.queue[s.pos] !== ex) return; await speakIn(rows[i], l.item, l.item.target, voiceOf(ex.cast, l.who)); }
+      })();
       offerSpokenAnswer(ex.answer);
       break;
     }
@@ -419,8 +444,8 @@ function refreshThread(): void {
   if (th) th.outerHTML = beadString();
 }
 
-function playLine(l: Line): Promise<void> {
-  return l.item ? audio.play(l.item, code()) : Promise.resolve();
+function playLine(l: Line, voice: VoiceProfile = YOU, el?: Element | null): Promise<void> {
+  return speakIn(el ?? null, l.item, l.target, voice);
 }
 
 function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
@@ -430,6 +455,7 @@ function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
   const lineItems = ex.turns.flatMap((x) => x.type === "say" ? (x.line.item ? [x.line.item] : []) : x.type === "reply" && x.answer.item ? [x.answer.item] : []);
   app().innerHTML = shell(`
     <div class="scene-tag">${ex.big ? "🔥" : "💬"} ${esc(L(ex.title))} · ${esc(L(ex.setting))}</div>
+    <p class="hear-hint">${lineItems.some((i) => audio.hasAudio(i, code())) || audio.hasAudio(undefined, code()) ? `🔈 ${t("tapToHear")}` : t("noVoice")}</p>
     <div class="chat convo" id="chat"></div>
     <div id="reply"></div>
   `, lineItems);
@@ -446,9 +472,9 @@ function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
     row.scrollIntoView({ behavior: "smooth", block: "nearest" });
     return row;
   };
-  const sayHtml = (l: Line) => `<span class="target-text bubble-line">${esc(l.target)}${l.item && audio.hasAudio(l.item, code()) ? ` <button class="mini-speak" aria-label="${t("playSound")}">🔊</button>` : ""}</span><button class="peek">${esc(lineMeaning(l))}</button>`;
-  const wire = (row: HTMLElement, l: Line) => {
-    row.querySelector(".mini-speak")?.addEventListener("click", () => playLine(l));
+  const sayHtml = (l: Line) => `${lineButton(l.target, audio.hasAudio(l.item, code()))}<button class="peek">${esc(lineMeaning(l))}</button>`;
+  const wire = (row: HTMLElement, l: Line, voice: VoiceProfile) => {
+    row.querySelector(".say-line")?.addEventListener("click", () => playLine(l, voice, row));
     row.querySelector(".peek")?.addEventListener("click", (e) => (e.currentTarget as HTMLElement).classList.toggle("shown"));
   };
 
@@ -458,9 +484,10 @@ function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
     const turn = ex.turns[ti];
     if (turn.type === "say") {
       const row = bubble(sayHtml(turn.line), false, turn.who);
-      wire(row, turn.line);
+      const v = voiceOf(ex.cast, turn.who);
+      wire(row, turn.line, v);
       ti++;
-      await Promise.race([playLine(turn.line), new Promise((r) => setTimeout(r, 2500))]);
+      await Promise.race([playLine(turn.line, v, row), new Promise((r) => setTimeout(r, 4000))]);
       await new Promise((r) => setTimeout(r, 350));
       return next();
     }
@@ -502,9 +529,9 @@ function renderConvo(ex: Extract<Exercise, { kind: "convo" }>): void {
       refreshThread();
       savePartial();
       const row = bubble(sayHtml(turn.answer), true);
-      wire(row, turn.answer);
+      wire(row, turn.answer, YOU);
       if (!ok) row.querySelector(".bubble")!.classList.add("corrected");
-      void playLine(turn.answer);
+      void playLine(turn.answer, YOU, row);
       // keep the question in the transcript, so the conversation reads well afterwards
       if (turn.prompt || turn.cue) {
         const ctx = document.createElement("div");
