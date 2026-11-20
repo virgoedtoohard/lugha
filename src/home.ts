@@ -64,7 +64,7 @@ const STEPS: { art: () => string; title: T; body: T }[] = [
   {
     art: () => `<div class="step-icons">${hearth(true, 54)}${calabash(4, 5, 54)}</div>`,
     title: { en: "Keep the fire burning", sw: "Weka moto uwake" },
-    body: { en: "Learn every day to keep your hearth fire lit. A wrong answer spills a little water from your calabash, and you refill it at the well.", sw: "Jifunze kila siku ili moto wa meko uendelee kuwaka. Jibu lisilo sahihi humwaga maji kidogo kutoka kibuyu chako, nawe unakijaza kisimani." },
+    body: { en: "Learn every day to keep your hearth fire lit. A wrong answer spills a little water from your calabash, and you refill it at the river.", sw: "Jifunze kila siku ili moto wa meko uendelee kuwaka. Jibu lisilo sahihi humwaga maji kidogo kutoka kibuyu chako, nawe unakijaza mtoni." },
   },
   {
     art: () => boma(3, true),

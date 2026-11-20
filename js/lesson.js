@@ -885,7 +885,7 @@ function emptyCalabash(onExit) {
       <div class="done-art">${calabash(0, 5, 80)}</div>
       <h1>${t("emptyTitle")}</h1>
       <p class="muted">${t("emptyBody", { t: fmtDuration(msToNextHeart()) })}</p>
-      <a class="btn btn-primary btn-wide" href="#/kisima">${t("goWell")}</a>
+      <a class="btn btn-primary btn-wide" href="#/mtoni">${t("goWell")}</a>
       <button class="btn btn-wide" id="back">${t("backSafari")}</button>
     </div>`;
     $("#back").addEventListener("click", onExit);

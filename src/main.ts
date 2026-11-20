@@ -1,4 +1,4 @@
-import { bead, bomaIcon, safariIcon, wellIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
+import { bead, bomaIcon, safariIcon, riverIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
 import { cueFor, learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
@@ -18,7 +18,7 @@ import type { Step } from "./store.js";
 import { $, $$, app, esc, fmtDuration, toast } from "./ui.js";
 
 // ---------- Router ----------
-const ALIAS: Record<string, string> = { learn: "safari", practice: "kisima", profile: "boma" };
+const ALIAS: Record<string, string> = { learn: "safari", practice: "mtoni", kisima: "mtoni", well: "mtoni", river: "mtoni", profile: "boma" };
 
 function route(): void {
   const hash = location.hash.replace(/^#\/?/, "");
@@ -35,9 +35,9 @@ function route(): void {
   if (view === "lesson" && arg) return openLesson(arg);
   if (view === "test" && arg) return openTest(arg);
   if (view === "talk" && arg) return openTalk(arg);
-  if (view === "kisima" && arg === "go") return openPractice();
+  if (view === "mtoni" && arg === "go") return openPractice();
   if (view === "courses" || (!p.activeCourse && view !== "boma" && view !== "review")) return page("courses", renderCourses);
-  if (view === "kisima") return page("kisima", renderWell);
+  if (view === "mtoni") return page("mtoni", renderRiver);
   if (view === "boma") return page("boma", renderBoma);
   if (view === "review") return page("review", renderReview);
   return page("safari", renderSafari);
@@ -72,7 +72,7 @@ function bottomNav(active: string): string {
   const u = cloud.currentUser();
   const tabs: [string, string, string][] = [
     ["safari", safariIcon(28), t("safari")],
-    ["kisima", wellIcon(28), t("kisima")],
+    ["mtoni", riverIcon(28), t("river")],
     ["boma", bomaIcon(30), t("boma")],
     ...(u && u.role !== "learner" ? [["review", "✍🏾", t("review")] as [string, string, string]] : []),
   ];
@@ -275,28 +275,27 @@ function placeWalker(code: string, w: { unitId: string; v: number }, r: ReturnTy
   setTimeout(() => requestAnimationFrame(tick), 350);
 }
 
-// ---------- Kisima (the well / practice) ----------
-function renderWell(root: HTMLElement): void {
+// ---------- Mtoni (the river / practice) ----------
+function renderRiver(root: HTMLElement): void {
   const p = getProgress();
   const course = p.activeCourse ? getCourse(p.activeCourse) : undefined;
   const ready = course && weakItems(course, 8).length >= 4;
   root.innerHTML = `
-  <section class="page well">
-    <div class="well-art">
-      <svg viewBox="0 0 200 140" aria-hidden="true">
-        <ellipse cx="100" cy="120" rx="80" ry="12" fill="#C9A066"/>
-        <rect x="50" y="62" width="100" height="56" rx="8" fill="#8E7A63"/>
-        <path d="M50 76h100M50 92h100M50 108h100M75 62v56M100 62v56M125 62v56" stroke="#6E5D4A" stroke-width="2"/>
-        <ellipse cx="100" cy="62" rx="50" ry="10" fill="#3A86C8"/>
-        <path d="M58 62V20h84v42" fill="none" stroke="#5A3E28" stroke-width="5"/>
-        <path d="M100 20v24" stroke="#7A5A3C" stroke-width="2"/>
-        <g transform="translate(92 42)">${calabash(4, 5, 16).replace('class="ic"', "")}</g>
+  <section class="page river">
+    <div class="river-art">
+      <svg viewBox="0 0 220 140" aria-hidden="true">
+        <path d="M0 52c40-10 70 6 110 0s70-16 110-6v94H0z" fill="#C9A066"/>
+        <path d="M0 74c38-12 74 10 112 2s72-18 108-8v34c-36-8-70 10-108 16S38 104 0 114z" fill="#3A86C8"/>
+        <path d="M18 88c14-4 26 2 40 0M92 98c16-5 30 1 46-2M150 82c12-3 24 0 36-2M44 106c12-3 22 1 34-1" fill="none" stroke="#BFE0F5" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M24 72c-2-14 1-26 5-34M30 72c1-12 5-20 10-26M190 64c-1-13 2-23 7-31M197 63c2-10 6-17 11-22" fill="none" stroke="#5E7A3A" stroke-width="2.6" stroke-linecap="round"/>
+        <ellipse cx="172" cy="114" rx="14" ry="6" fill="#8E7A63"/><ellipse cx="44" cy="124" rx="10" ry="4.5" fill="#8E7A63"/>
+        <g transform="translate(100 64)">${calabash(4, 5, 22).replace('class="ic"', "")}</g>
       </svg>
     </div>
     <h1>${t("wellTitle")}</h1>
     <p class="muted">${ready ? t("wellBody") : t("wellEmpty")}</p>
     <p class="water-line">${calabash(p.hearts, 5, 28)} ${p.hearts} / ${MAX_HEARTS}</p>
-    ${ready ? `<a class="btn btn-primary btn-wide" href="#/kisima/go">${t("startPractice")}</a>` : `<a class="btn btn-primary btn-wide" href="#/safari">${t("goLessons")}</a>`}
+    ${ready ? `<a class="btn btn-primary btn-wide" href="#/mtoni/go">${t("startPractice")}</a>` : `<a class="btn btn-primary btn-wide" href="#/safari">${t("goLessons")}</a>`}
   </section>`;
 }
 
@@ -491,14 +490,14 @@ function openPractice(): void {
   const course = p.activeCourse ? getCourse(p.activeCourse) : undefined;
   if (!course) { location.hash = "#/courses"; return; }
   const weak = weakItems(course, 8);
-  if (weak.length < 4) { location.hash = "#/kisima"; return; }
+  if (weak.length < 4) { location.hash = "#/mtoni"; return; }
   document.body.classList.add("in-lesson");
   startSession({
     mode: "practice", course,
     title: `${t("wellTitle")} · ${course.nativeName}`,
     bead: "#2456A4",
     exercises: generatePractice(weak, allItems(course)),
-    onExit: () => { location.hash = "#/kisima"; route(); },
+    onExit: () => { location.hash = "#/mtoni"; route(); },
   });
 }
 

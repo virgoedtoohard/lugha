@@ -158,9 +158,9 @@ code { background: var(--clay-soft); padding: 1px 6px; border-radius: 6px; font-
 .cast-m { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .1rem; padding: .6rem; border-radius: 14px; background: var(--earth); }
 .avatar { font-size: 1.8rem; line-height: 1; }
 
-/* ---------- Well ---------- */
-.well { text-align: center; }
-.well-art svg { width: 220px; max-width: 70%; }
+/* ---------- River (practice) ---------- */
+.river { text-align: center; }
+.river-art svg { width: 240px; max-width: 75%; border-radius: 22px; }
 .water-line { font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: .4rem; }
 
 /* ---------- Boma ---------- */

@@ -318,13 +318,11 @@ export function safariIcon(size = 30) {
     <circle cx="21.4" cy="5" r="3.6" fill="currentColor"/>
   </svg>`;
 }
-/** Well tab: two posts, a crossbar with a rope and bucket, and a round stone wall. */
-export function wellIcon(size = 30, cut = "#2B1D14") {
+/** River tab: two hand-drawn currents between the banks, with a reed on the near bank. */
+export function riverIcon(size = 30) {
     return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
-    <path d="M7.6 18.2V5.6M24.5 18.1V5.4M5.8 6c6.8-.7 13.6-.8 20.5-.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    <path d="M16 6v6.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    <path d="M13.9 12.4h4.3l-.5 3.4h-3.3z" fill="currentColor"/>
-    <path d="M4.6 18.4c7.6-.9 15.2-.9 22.9 0l-.7 9.3c-7.2.8-14.3.8-21.5 0z" fill="currentColor"/>
-    <path d="M5.3 22.6c7.1.6 14.2.6 21.3 0M11 18.2l-.3 4.3M20.6 18.3l.3 4.2M15.6 22.8l-.2 4.9" fill="none" stroke="${cut}" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M3.5 13.2c3.4-2.6 6.4 1.9 9.8-.4 3.1-2.1 5.9-2.6 8.9-.2 2.3 1.8 4.4 1.4 6.4-.1M3.2 20.4c3.6-2.4 6.6 2.1 10.1-.2 3-2 5.8-2.4 8.7-.1 2.4 1.9 4.5 1.5 6.6 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+    <path d="M7.4 28.6c-.2-2.9.5-5.1 1.6-6.7M10.3 28.4c.5-2 1.4-3.4 2.6-4.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="24.5" cy="5.6" r="2.4" fill="currentColor"/>
   </svg>`;
 }
