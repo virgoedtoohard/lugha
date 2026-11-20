@@ -1,5 +1,5 @@
 // Offline support: app shell is cached; lesson audio is cached as it's played.
-const CACHE = "lugha-v5";
+const CACHE = "lugha-v6";
 const SHELL = [
   "./", "index.html", "styles.css", "config.js", "manifest.webmanifest", "icon.svg",
   "js/main.js", "js/art.js", "js/i18n.js", "js/audio.js", "js/home.js", "js/convo.js", "js/speech.js", "js/cloud.js", "js/content.js", "js/exercises.js", "js/lesson.js",
@@ -29,7 +29,7 @@ self.addEventListener("fetch", (e) => {
 
   // Network first for our own files (so updates show up), cache fallback when offline.
   e.respondWith(
-    fetch(req)
+    fetch(req, { cache: "no-cache" })   // always check for a newer file when online
       .then((res) => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
         return res;

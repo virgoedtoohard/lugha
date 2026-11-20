@@ -90,8 +90,8 @@ export const BOMA_PIECES = [
 /** Winding road through one unit's stops. Returns svg, node positions (percent) and a way
  *  to find any point between two nodes, so the guide can stand part-way along the road. */
 export function road(count) {
-    const H = 110 * count + 60, W = 300;
-    const pts = Array.from({ length: count }, (_, i) => ({ x: W / 2 + Math.sin(i * 1.3) * 80, y: 85 + i * 110 }));
+    const H = 110 * count + 100, W = 300;
+    const pts = Array.from({ length: count }, (_, i) => ({ x: W / 2 + Math.sin(i * 1.3) * 80, y: 125 + i * 110 }));
     const stops = [{ x: W / 2, y: 0 }, ...pts, { x: W / 2, y: H }];
     let d = `M${W / 2} 0`;
     for (let j = 1; j < stops.length; j++) {
@@ -123,11 +123,39 @@ export function road(count) {
         const y = samples[i - 1].y + (samples[i].y - samples[i - 1].y) * q;
         return { x: (x / W) * 100, y: (y / H) * 100 };
     };
+    // Whole road as a dense polyline, so a position can be stepped back by a fixed distance.
+    const poly = [];
+    const nodeLen = []; // distance along the road at the top (-1), each node (0..), and the end
+    let run = 0;
+    for (let j = 1; j < stops.length; j++) {
+        nodeLen.push(run);
+        for (let i = j === 1 ? 0 : 1; i <= 40; i++) {
+            const q = cubic(stops[j - 1], stops[j], i / 40);
+            if (poly.length)
+                run += Math.hypot(q.x - poly[poly.length - 1].x, q.y - poly[poly.length - 1].y);
+            q.d = run;
+            poly.push(q);
+        }
+    }
+    nodeLen.push(run);
+    /** v in node units (node i at i, -1 = top of the road); stepped back along the road by backPx. */
+    const at = (v, backPx) => {
+        const k = Math.max(-1, Math.min(count, Math.floor(v)));
+        const f = Math.max(0, Math.min(1, v - k));
+        const a = nodeLen[k + 1], b = nodeLen[Math.min(k + 2, nodeLen.length - 1)];
+        const want = Math.max(0, Math.min(run, a + (b - a) * f - backPx));
+        let i = 1;
+        while (i < poly.length - 1 && poly[i].d < want)
+            i++;
+        const p0 = poly[i - 1], p1 = poly[i];
+        const q = (want - p0.d) / ((p1.d - p0.d) || 1);
+        return { x: ((p0.x + (p1.x - p0.x) * q) / W) * 100, y: ((p0.y + (p1.y - p0.y) * q) / H) * 100 };
+    };
     const svg = `<svg class="road" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <path d="${d}" fill="none" stroke="#D2B48A" stroke-width="26" stroke-linecap="round"/>
     <path d="${d}" fill="none" stroke="#B8946A" stroke-width="2" stroke-dasharray="1 9" stroke-linecap="round"/>
   </svg>`;
-    return { svg, pts: pts.map((p) => ({ x: (p.x / W) * 100, y: (p.y / H) * 100 })), between, height: H };
+    return { svg, pts: pts.map((p) => ({ x: (p.x / W) * 100, y: (p.y / H) * 100 })), between, at, height: H };
 }
 /** Small thatched hut: the home button. */
 export function hutIcon(size = 30) {
@@ -258,3 +286,26 @@ export function guideFigure(guide, size = 64) {
     ${extraBack}${back}${front}${extraFront}
   </svg>`;
 }
+/** The Boma tab: a homestead. One big hut behind, two smaller huts in front on either side. */
+export function bomaIcon(size = 30) {
+    const hut = (x, y, s, wall, roof) => `<g transform="translate(${x} ${y}) scale(${s})">
+      <rect x="-9" y="0" width="18" height="11" rx="1.5" fill="${wall}" stroke="#2B1D14" stroke-width="1.1"/>
+      <path d="M-3 11v-5a3 3 0 0 1 6 0v5z" fill="#3A2416"/>
+      <path d="M-13 2 L0 -12 L13 2 Z" fill="${roof}" stroke="#2B1D14" stroke-width="1.1" stroke-linejoin="round"/>
+      <path d="M-7 -1 L0 -8 M7 -1 L0 -8" stroke="#A88341" stroke-width=".9"/>
+    </g>`;
+    return `<svg class="ic boma-ic" width="${size}" height="${size}" viewBox="0 0 40 34" aria-hidden="true">
+    <ellipse cx="20" cy="31" rx="19" ry="2.6" fill="#C9A066" opacity=".9"/>
+    ${hut(20, 12, 1.05, "#9A5F33", "#CFA455")}
+    ${hut(8.5, 21.5, 0.7, "#B5733F", "#E8C27A")}
+    ${hut(31.5, 21.5, 0.7, "#B5733F", "#E8C27A")}
+  </svg>`;
+}
+// ---------- Node icons (drawn, so they look the same on every phone) ----------
+const ico = (body, size = 26) => `<svg class="node-ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
+export const checkIcon = () => ico(`<path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`);
+export const lockIcon = () => ico(`<rect x="5" y="11" width="14" height="10" rx="2.5" fill="#8C7B64"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#8C7B64" stroke-width="2.4"/><circle cx="12" cy="16" r="1.6" fill="#D9CDB8"/>`, 22);
+export const chatIcon = () => ico(`<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z" fill="#fff" stroke="#2B1D14" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8.6" cy="10" r="1.2" fill="#2B1D14"/><circle cx="12" cy="10" r="1.2" fill="#2B1D14"/><circle cx="15.4" cy="10" r="1.2" fill="#2B1D14"/>`, 28);
+export const fireIcon = () => ico(`<path d="M12 2.5c1.6 4 6 5.6 6 10.7a6 6 0 0 1-12 0c0-2.6 1.6-4.2 2.5-5 0 2.4.8 3.4 1.8 3.4 0-3.3-.8-6 1.7-9.1z" fill="#F6C343" stroke="#2B1D14" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 11c.9 2.4 3 3.2 3 5.3a3 3 0 0 1-6 0c0-1.4.9-2.3 1.4-2.8.2 1.1.7 1.6 1.2 1.6 0-1.6-.5-2.6.4-4.1z" fill="#E8742B"/>`, 32);
+export const flagIcon = () => ico(`<path d="M6 21V3.5" stroke="#2B1D14" stroke-width="2" stroke-linecap="round"/><path d="M6.5 4h12l-2.5 4 2.5 4h-12z" fill="#fff" stroke="#2B1D14" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 4v8M12 4v8M15 4v8" stroke="#2B1D14" stroke-width="1.2" stroke-dasharray="2 2"/>`, 24);
+export const pinIcon = () => `<svg width="22" height="28" viewBox="0 0 22 28" aria-hidden="true"><path d="M11 27s9-9.4 9-16A9 9 0 0 0 2 11c0 6.6 9 16 9 16z" fill="#B8322A" stroke="#FDF4E3" stroke-width="1.6"/><circle cx="11" cy="11" r="3.4" fill="#FDF4E3"/></svg>`;

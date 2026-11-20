@@ -1,4 +1,4 @@
-import { bead, beadsIcon, boma, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
+import { bead, bomaIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
 import { legConvo, miniConvo, stopConvo } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
@@ -21,8 +21,8 @@ function route() {
     document.body.classList.remove("in-lesson");
     leaveHome();
     window.scrollTo(0, 0);
-    // New visitors land on the home page; returning learners go straight to their journey
-    if (view === "home" || (!view && !p.activeCourse))
+    // Everyone lands on the home page; returning learners get a "Continue" button there
+    if (view === "home" || !view)
         return renderHome(app(), route);
     if (view === "lesson" && arg)
         return openLesson(arg);
@@ -70,7 +70,7 @@ function bottomNav(active) {
     const tabs = [
         ["safari", "🧭", t("safari")],
         ["kisima", "🪣", t("kisima")],
-        ["boma", beadsIcon(26), t("boma")],
+        ["boma", bomaIcon(34), t("boma")],
         ...(u && u.role !== "learner" ? [["review", "✍🏾", t("review")]] : []),
     ];
     return `<nav class="bottomnav">${tabs.map(([id, ic, label]) => `<a href="#/${id}" class="${active === id ? "active" : ""}"><span>${ic}</span>${label}</a>`).join("")}</nav>`;
@@ -137,15 +137,28 @@ function renderSafari(root) {
     const all = steps(course);
     const here = position(course);
     const guide = GUIDES[course.guide];
-    // walker placement: which unit, which node on that unit's road, how far toward the next
+    const pathOf = (u) => {
+        const items = [];
+        for (const s of all.filter((x) => x.unit === u)) {
+            items.push({ kind: s.kind, step: s });
+            if (s.kind === "talk")
+                items.push({ kind: "gate" });
+        }
+        return items;
+    };
+    // Where the guide stands, in "road position" units: node i is at i, half-way to the next is i + 0.5
     let walker = null;
     if (here.step) {
-        const route = all.filter((s) => s.unit === here.step.unit);
-        walker = { unitId: here.step.unit.id, k: route.findIndex((s) => s.id === here.step.id), f: here.fraction };
+        const items = pathOf(here.step.unit);
+        const ri = items.findIndex((x) => x.step?.id === here.step.id);
+        let rj = items.findIndex((x, i) => i > ri && x.kind !== "gate");
+        if (rj < 0)
+            rj = items.length;
+        walker = { unitId: here.step.unit.id, v: ri + here.fraction * (rj - ri) };
     }
     else {
         const lastU = course.units[course.units.length - 1];
-        walker = { unitId: lastU.id, k: all.filter((s) => s.unit === lastU).length - 1, f: 1 };
+        walker = { unitId: lastU.id, v: pathOf(lastU).length - 1 + 0.7 };
     }
     const roads = {};
     root.innerHTML = `
@@ -162,31 +175,36 @@ function renderSafari(root) {
       </div>
     </div>
     ${course.units.map((u, ui) => {
-        const route = all.filter((s) => s.unit === u);
-        const r = road(route.length);
+        const items = pathOf(u);
+        const r = road(items.length);
         roads[u.id] = r;
         const done = unitDone(u);
         const best = p.tests[u.id];
         const gateOpen = isUnlocked(course, u.lessons[0].id);
-        const talkIdx = route.findIndex((s) => s.kind === "talk");
-        const tp = r.pts[talkIdx];
-        const gx = tp.x > 50 ? tp.x - 34 : tp.x + 34;
         return `
       <div class="stop">
         <div class="signpost" style="--bead:${u.bead}">
-          <div class="post-pin">📍</div>
+          <div class="post-pin">${pinIcon()}</div>
           <div><span class="post-place">${esc(u.place)}</span>
           <span class="post-unit">${t("unit")} ${ui + 1} · ${esc(L(u.title))}</span></div>
           ${done ? `<span class="post-done">${bead(u.bead, 22)}</span>` : ""}
         </div>
         <div class="route" data-unit="${u.id}" style="height:${r.height}px">
           ${r.svg}
-          ${route.map((s, si) => {
+          ${items.map((it, i) => {
+            const pt = r.pts[i];
+            if (it.kind === "gate") {
+                const passed = best !== undefined && best >= 80;
+                return `<a class="node k-gate ${passed ? "done" : gateOpen ? "open" : "locked"}" style="left:${pt.x}%;top:${pt.y}%;--bead:${u.bead}" ${gateOpen ? `href="#/test/${u.id}"` : `aria-disabled="true"`}>
+                <span class="node-dot">${gateOpen ? flagIcon() : lockIcon()}</span>
+                <span class="node-label">${t("gateTest")}${best !== undefined ? ` · ${best}%` : ""}</span>
+              </a>`;
+            }
+            const s = it.step;
             const isDone = isDoneStep(s.id);
             const open = isUnlocked(course, s.id);
             const cls = isDone ? "done" : s.id === here.step?.id ? "next" : open ? "open" : "locked";
-            const pt = r.pts[si];
-            const icon = isDone ? "✓" : !open ? "🔒" : s.kind === "talk" ? "💬" : s.kind === "leg" ? "🔥" : String(u.lessons.indexOf(s.lesson) + 1);
+            const icon = isDone ? checkIcon() : !open ? lockIcon() : s.kind === "talk" ? chatIcon() : s.kind === "leg" ? fireIcon() : `<span class="node-num">${u.lessons.indexOf(s.lesson) + 1}</span>`;
             const label = s.kind === "lesson" ? L(s.lesson.title) : s.kind === "talk" ? t("talkNode") : t("legNode");
             const href = s.kind === "lesson" ? `#/lesson/${s.id}` : `#/talk/${s.id}`;
             return `<a class="node k-${s.kind} ${cls}" style="left:${pt.x}%;top:${pt.y}%;--bead:${u.bead}" ${open ? `href="${href}"` : `aria-disabled="true"`}>
@@ -194,10 +212,6 @@ function renderSafari(root) {
               <span class="node-label">${esc(label)}</span>
             </a>`;
         }).join("")}
-          <a class="node gate side ${best !== undefined && best >= 80 ? "done" : gateOpen ? "open" : "locked"}" style="left:${gx}%;top:${tp.y}%;--bead:${u.bead}" ${gateOpen ? `href="#/test/${u.id}"` : `aria-disabled="true"`}>
-            <span class="node-dot">${gateOpen ? "🏁" : "🔒"}</span>
-            <span class="node-label">${t("gateTest")}${best !== undefined ? ` · ${best}%` : ""}</span>
-          </a>
           ${walker && walker.unitId === u.id ? `<div class="walker" id="walker" title="${t("youAreHere")}">${guideFigure(course.guide, 40)}<span class="here-tag">${t("youAreHere")}</span></div>` : ""}
         </div>
       </div>`;
@@ -216,15 +230,15 @@ function placeWalker(code, w, r) {
     const el = document.getElementById("walker");
     if (!el || !r)
         return;
-    const set = (k, f) => {
-        const pt = r.between(k, f);
-        // walk along the roadside, so the guide never hides a stop
-        const side = pt.x > 30 ? -1 : 1;
-        const shift = side * 15;
-        el.style.left = `${pt.x + shift}%`;
+    // Feet on the centre of the road. The guide stands just short of the stop they're about to do,
+    // so its button stays visible, and walks forward as the stop is done.
+    const LEAD_PX = 54; // node radius plus a step, so the guide and their tag never cover the stop
+    const set = (v) => {
+        const pt = r.at(v, LEAD_PX);
+        el.style.left = `${pt.x}%`;
         el.style.top = `${pt.y}%`;
     };
-    const key = "lugha.walker";
+    const key = "lugha.walker2";
     let prev = null;
     try {
         prev = JSON.parse(sessionStorage.getItem(key) ?? "null");
@@ -234,27 +248,25 @@ function placeWalker(code, w, r) {
         sessionStorage.setItem(key, JSON.stringify({ code, ...w }));
     }
     catch { /* ignore */ }
-    const to = w.k + w.f;
+    const to = w.v;
     let from = to;
     if (prev && prev.code === code) {
-        if (prev.unitId === w.unitId && prev.k + prev.f < to)
-            from = prev.k + prev.f;
+        if (prev.unitId === w.unitId && prev.v < to)
+            from = prev.v;
         else if (prev.unitId !== w.unitId)
             from = -1; // arriving at a new stop: walk in from the top
     }
-    set(Math.floor(from), from - Math.floor(from));
+    set(from);
     requestAnimationFrame(() => el.scrollIntoView({ block: "center", behavior: from === to ? "auto" : "smooth" }));
     if (from === to)
         return;
     el.classList.add("walking");
-    const dur = Math.min(2600, 700 + (to - from) * 900);
+    const dur = Math.min(2600, 700 + (to - from) * 800);
     const t0 = performance.now();
     const tick = (now) => {
         const q = Math.min(1, (now - t0) / dur);
         const e = q < .5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2;
-        const v = from + (to - from) * e;
-        const k = Math.min(Math.floor(v), Math.max(w.k, -1));
-        set(k, Math.min(1, v - k));
+        set(from + (to - from) * e);
         if (q < 1)
             requestAnimationFrame(tick);
         else
