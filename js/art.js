@@ -157,16 +157,6 @@ export function road(count) {
   </svg>`;
     return { svg, pts: pts.map((p) => ({ x: (p.x / W) * 100, y: (p.y / H) * 100 })), between, at, height: H };
 }
-/** Small thatched hut: the home button. */
-export function hutIcon(size = 30) {
-    return `<svg class="ic hut" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
-    <rect x="7" y="15" width="18" height="13" rx="2" fill="#B5733F" stroke="#2B1D14" stroke-width="1.4"/>
-    <path d="M13 28v-6a3 3 0 0 1 6 0v6z" fill="#4A2F1D"/>
-    <path d="M3 17 L16 4 L29 17 Z" fill="#D9AE5F" stroke="#2B1D14" stroke-width="1.4" stroke-linejoin="round"/>
-    <path d="M9 13 L16 6 M12 15.5 L16 9 M23 13 L16 6 M20 15.5 L16 9" stroke="#A88341" stroke-width="1.1"/>
-    <path d="M15 4.5 L16 1.8 L17 4.5" fill="none" stroke="#2B1D14" stroke-width="1.2"/>
-  </svg>`;
-}
 /** Tiny bead string for the Boma tab. */
 export function beadsIcon(size = 26) {
     const cols = ["#B8322A", "#2456A4", "#E2A21B", "#3E7B3A", "#D9692B"];
@@ -286,21 +276,6 @@ export function guideFigure(guide, size = 64) {
     ${extraBack}${back}${front}${extraFront}
   </svg>`;
 }
-/** The Boma tab: a homestead. One big hut behind, two smaller huts in front on either side. */
-export function bomaIcon(size = 30) {
-    const hut = (x, y, s, wall, roof) => `<g transform="translate(${x} ${y}) scale(${s})">
-      <rect x="-9" y="0" width="18" height="11" rx="1.5" fill="${wall}" stroke="#2B1D14" stroke-width="1.1"/>
-      <path d="M-3 11v-5a3 3 0 0 1 6 0v5z" fill="#3A2416"/>
-      <path d="M-13 2 L0 -12 L13 2 Z" fill="${roof}" stroke="#2B1D14" stroke-width="1.1" stroke-linejoin="round"/>
-      <path d="M-7 -1 L0 -8 M7 -1 L0 -8" stroke="#A88341" stroke-width=".9"/>
-    </g>`;
-    return `<svg class="ic boma-ic" width="${size}" height="${size}" viewBox="0 0 40 34" aria-hidden="true">
-    <ellipse cx="20" cy="31" rx="19" ry="2.6" fill="#C9A066" opacity=".9"/>
-    ${hut(20, 12, 1.05, "#9A5F33", "#CFA455")}
-    ${hut(8.5, 21.5, 0.7, "#B5733F", "#E8C27A")}
-    ${hut(31.5, 21.5, 0.7, "#B5733F", "#E8C27A")}
-  </svg>`;
-}
 // ---------- Node icons (drawn, so they look the same on every phone) ----------
 const ico = (body, size = 26) => `<svg class="node-ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
 export const checkIcon = () => ico(`<path d="M5 12.5l4.2 4.2L19 7" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`);
@@ -312,4 +287,44 @@ export const pinIcon = () => `<svg width="22" height="28" viewBox="0 0 22 28" ar
 /** The Lugha logo: a red bead that is also a speech bubble. */
 export function logoMark(size = 28) {
     return `<svg class="ic logo-mark" width="${size}" height="${size}" viewBox="0 0 120 120" aria-hidden="true"><path d="M60 16a40 40 0 1 1-21.6 73.6L18 102l7.4-22.8A40 40 0 0 1 60 16z" fill="#B8322A"/><circle cx="45" cy="40" r="10" fill="#FFFFFF" opacity=".42"/></svg>`;
+}
+// ---------- Hand-inked icons ----------
+// One colour (currentColor), slightly uneven lines, like a lino print or a hand-painted sign.
+// `cut` is the colour behind the icon, used for doorways and the gaps between huts.
+/** One hut: thatched cone roof with a little peak, round mud wall, dark doorway. */
+function hutShape(cut, door = true) {
+    return `<path d="M3.6 15.9c3.3-3.1 6.9-7.3 10.9-12.2.5-.6 1.3-.6 1.8 0 3.7 4.7 7.5 8.9 11.3 12.1.4.4.1 1-.4 1-8.1-.6-15.6-.5-23.3.1-.5 0-.7-.6-.3-1z" fill="currentColor"/>
+    <path d="M15.2 3.9l.4-2.4.5 2.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M6.9 17.6c-.2 3.2-.1 6.3.2 9.4 5.9.6 11.9.6 17.8-.1.3-3 .4-6.1.2-9.3" fill="currentColor"/>
+    ${door ? `<path d="M13.3 27.3v-4.6c0-1.5 1.2-2.7 2.7-2.7s2.6 1.2 2.6 2.7v4.6z" fill="${cut}"/>
+    <path d="M7.2 17.9c3.1-.4 6-.5 8.9-.5 2.9 0 5.9.1 8.8.5" fill="none" stroke="${cut}" stroke-width="1.1" stroke-linecap="round" opacity=".8"/>` : ""}`;
+}
+/** The home button: a single hut. */
+export function hutIcon(size = 30, cut = "#FFFBF3") {
+    return `<svg class="ic hut" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">${hutShape(cut)}</svg>`;
+}
+/** The Boma tab: a homestead, one big hut behind and two smaller huts in front on either side. */
+export function bomaIcon(size = 30, cut = "#2B1D14") {
+    const small = (x) => `<g transform="translate(${x} 13) scale(.58)" stroke="${cut}" stroke-width="2.6" paint-order="stroke" stroke-linejoin="round">${hutShape(cut)}</g>`;
+    return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+    <g transform="translate(3.5 1.5) scale(.78)">${hutShape(cut, false)}</g>
+    ${small(-.6)}${small(14)}
+  </svg>`;
+}
+/** Safari tab: a winding footpath leading to a bead. */
+export function safariIcon(size = 30) {
+    return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M7.5 29c-.6-3.4 2.4-5 6-6.2 3.9-1.3 7.4-2.9 6.6-6.6-.7-3.2-5.4-3.4-5.9-6.3-.3-1.8.9-3.1 2.8-3.9" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-dasharray=".1 5.2"/>
+    <circle cx="21.4" cy="5" r="3.6" fill="currentColor"/>
+  </svg>`;
+}
+/** Well tab: two posts, a crossbar with a rope and bucket, and a round stone wall. */
+export function wellIcon(size = 30, cut = "#2B1D14") {
+    return `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M7.6 18.2V5.6M24.5 18.1V5.4M5.8 6c6.8-.7 13.6-.8 20.5-.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <path d="M16 6v6.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M13.9 12.4h4.3l-.5 3.4h-3.3z" fill="currentColor"/>
+    <path d="M4.6 18.4c7.6-.9 15.2-.9 22.9 0l-.7 9.3c-7.2.8-14.3.8-21.5 0z" fill="currentColor"/>
+    <path d="M5.3 22.6c7.1.6 14.2.6 21.3 0M11 18.2l-.3 4.3M20.6 18.3l.3 4.2M15.6 22.8l-.2 4.9" fill="none" stroke="${cut}" stroke-width="1.1" stroke-linecap="round"/>
+  </svg>`;
 }

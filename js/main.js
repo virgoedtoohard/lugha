@@ -1,4 +1,4 @@
-import { bead, bomaIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
+import { bead, bomaIcon, safariIcon, wellIcon, boma, chatIcon, checkIcon, fireIcon, flagIcon, lockIcon, pinIcon, BOMA_PIECES, calabash, GUIDES, guideFigure, hearth, hutIcon, necklace, road } from "./art.js";
 import { learnedThrough, legConvo, miniConvo, stopConvo, withPadding } from "./convo.js";
 import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
@@ -54,7 +54,7 @@ function topBar() {
     return `
   <header class="topbar">
     <div class="top-left">
-      <a class="top-brand" href="#/home" aria-label="${getLang() === "sw" ? "Nyumbani" : "Home"}" title="${getLang() === "sw" ? "Nyumbani" : "Home"}">${hutIcon(36)}</a>
+      <a class="top-brand" href="#/home" aria-label="${getLang() === "sw" ? "Nyumbani" : "Home"}" title="${getLang() === "sw" ? "Nyumbani" : "Home"}">${hutIcon(32)}</a>
       <a class="course-pill" href="#/courses">${esc(label)} ▾</a>
     </div>
     <div class="top-stats">
@@ -68,9 +68,9 @@ function topBar() {
 function bottomNav(active) {
     const u = cloud.currentUser();
     const tabs = [
-        ["safari", "🧭", t("safari")],
-        ["kisima", "🪣", t("kisima")],
-        ["boma", bomaIcon(34), t("boma")],
+        ["safari", safariIcon(28), t("safari")],
+        ["kisima", wellIcon(28), t("kisima")],
+        ["boma", bomaIcon(30), t("boma")],
         ...(u && u.role !== "learner" ? [["review", "✍🏾", t("review")]] : []),
     ];
     return `<nav class="bottomnav">${tabs.map(([id, ic, label]) => `<a href="#/${id}" class="${active === id ? "active" : ""}"><span>${ic}</span>${label}</a>`).join("")}</nav>`;
