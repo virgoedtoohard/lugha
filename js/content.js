@@ -15,6 +15,11 @@
 //  - Nyore (Olunyole): single words matched to their verses in Ebaibo Inzienukhu
 //    (Bible Society of Kenya, 2019, bible.com version 2882), e.g. GEN 1, 7:12, 15:5, 37:9,
 //    EXO 9:3, MAT 2:11, 5:13-15, 7:24, 8:13, JHN 4:11, 6:51, LUK 5:4, 12:28, 15:7. No verses are copied.
+//  - Bukusu: Lubukusu Bible (bible.com 2654/2658): GEN 1:7, 4:10, 7:12, 12:4, 17:12, 37:3, 37:9; MAT 6:25, 6:34; JHN 4:11
+//  - Maragoli: Logooli Bible, Kitabu Kitakatifu (bible.com 2888): GEN 7:12, 7:23, 11:6, 12:1, 12:4, 37:6-9; JHN 10:11
+//  - Luhya General: Ibibilia Indakatifu (bible.com 2656/2659): GEN 7:12, 37:9; MAT 6:26; JHN 4:25
+//  - Kamba: Kikamba Bible (bible.com 2773/2774): GEN 3:19, 9:1, 15:5, 37:11; MAT 7:11; MRK 2:12
+//    Only single words are taken from these Bibles; no verse text is copied.
 //  - Wanga (Oluwanga): Anangwe & Marlo, Luwanga–English Dictionary, draft of 2008
 //    (re-translation of Appleby's 1943 Luhya–English Vocabulary, recorded by a native speaker)
 const tr = (en, sw) => ({ en, sw });
@@ -298,7 +303,7 @@ const kamba = {
         glosses: { "nĩ": { en: "is / it is", sw: "ni" } } },
     family: "Kĩkamba", name: "Kamba", nativeName: "Kĩkamba",
     speakers: "Eastern Kenya — Machakos, Makueni, Kitui",
-    dialectNote: "Uses common Machakos-area spelling.",
+    dialectNote: "Uses common Machakos-area spelling. The Mutomo stop's words were checked against the Kikamba Bible (Bible Society of Kenya, 2011).",
     cast: cast(["Susu Mwikali", "👵🏾"], "Musyoka", "Mama Mwende", "Mutua"),
     units: [
         unit("kam-u1", U.greet, "Machakos", RED, [
@@ -366,6 +371,19 @@ const kamba = {
                 ["mũtwe", "head", "kichwa", "high"], ["metho", "eyes", "macho", "high"],
                 ["kanywa", "mouth", "mdomo", "medium"], ["kwoko", "hand / arm", "mkono", "medium"],
                 ["kũũ", "leg / foot", "mguu", "medium"], ["matũ", "ears", "masikio", "medium"],
+            ]),
+        ]),
+        unit("kam-u9", tr("Sky and land", "Anga na nchi"), "Mutomo", ORANGE, [
+            lesson("kam-u9-l1", tr("The sky", "Angani"), [
+                ["ndata", "stars", "nyota", "high", "Genesis 15:5."], ["matunĩ", "in the sky", "angani", "high"],
+                ["nthĩ", "land / earth", "nchi / dunia", "high"], ["mũthanga", "soil", "udongo", "high"],
+                ["nza", "outside", "nje", "high"],
+            ]),
+            lesson("kam-u9-l2", U.people, [
+                ["andũ", "people", "watu", "high"], ["syana", "children", "watoto", "high"],
+                ["Ĩthe", "father (his / her)", "baba yake", "high", "'Ĩthe wenyu' is 'your father'."],
+                ["thayũ", "life", "uzima", "high"], ["Ngai", "God", "Mungu", "high"],
+                ["ndoto", "dream", "ndoto", "high"],
             ]),
         ]),
     ],
@@ -499,7 +517,7 @@ const luhyaGeneral = {
     frames: { greet: ["luy-u1-l1-1", "luy-u1-l1-1"] },
     family: "Luhya", name: "General", nativeName: "Oluluhya",
     speakers: "Western Kenya — Kakamega, Bungoma, Vihiga, Busia",
-    dialectNote: "Words heard across many Luhya varieties. For dialect-specific lessons choose Bukusu, Maragoli or Nyore.",
+    dialectNote: "Words heard across many Luhya varieties. The sky and time words were checked against the Luhya Bible (Ibibilia Indakatifu, Bible Society of Kenya). For one variety, choose Bukusu, Maragoli, Wanga or Nyore.",
     cast: cast(["Guku Nafula", "👵🏾"], "Wafula", "Mama Nekesa", "Barasa", tr("Grandparent", "Babu au bibi")),
     units: [
         unit("luy-u1", U.greet, "Kakamega", RED, [
@@ -537,8 +555,22 @@ const luhyaGeneral = {
                 ["imbwa", "dog", "mbwa", "medium"], ["inzofu", "elephant", "tembo", "low"],
             ]),
             lesson("luy-u6-l2", U.land, [
-                ["ifula", "rain", "mvua", "medium"], ["lijuba", "sun", "jua", "medium"],
+                ["ifula", "rain", "mvua", "high"], ["eliuba", "sun", "jua", "high", "Bukusu says 'enyanga'."],
                 ["omuliro", "fire", "moto", "medium"], ["omusala", "tree", "mti", "medium"],
+            ]),
+        ]),
+        unit("luy-u7", tr("Sky and time", "Anga na wakati"), "Kakamega Forest", ORANGE, [
+            lesson("luy-u7-l1", tr("The sky", "Angani"), [
+                ["omwesi", "moon", "mwezi", "high"],
+                ["tsing'ining'ini", "stars", "nyota", "high"],
+                ["amanyonyi", "birds", "ndege", "high", "One bird: linyonyi."],
+                ["ekhumi nandala", "eleven", "kumi na moja", "high", "Ten and one."],
+            ]),
+            lesson("luy-u7-l2", U.time, [
+                ["tsinyanga", "days", "siku", "high"],
+                ["eshilo", "night", "usiku", "high"],
+                ["eshialo", "land / country", "nchi", "high"],
+                ["amakhuwa", "words / matters", "maneno / mambo", "high"],
             ]),
         ]),
     ],
@@ -548,7 +580,7 @@ const bukusu = {
     frames: { thanks: "luy-bxk-u1-l1-4", greet: ["luy-bxk-u1-l1-2", "luy-bxk-u1-l1-3"] },
     family: "Luhya", name: "Bukusu", nativeName: "Lubukusu",
     speakers: "Bungoma and Trans Nzoia — the largest Luhya group",
-    dialectNote: "Numbers and words from community word lists; greetings partly from Lugisu, Bukusu's sister variety. All need a Bukusu reviewer.",
+    dialectNote: "The later stops use words checked against the Lubukusu Bible (Bible Society of Kenya). Greetings come partly from Lugisu, Bukusu's sister variety, and still need a Bukusu reviewer.",
     cast: cast(["Guku Nasimiyu", "👵🏾"], "Wanjala", "Mama Nekesa", "Simiyu", tr("Grandparent", "Babu au bibi")),
     units: [
         unit("luy-bxk-u1", U.greet, "Bungoma", RED, [
@@ -559,12 +591,35 @@ const bukusu = {
                 ["Wanyala", "Thank you", "Asante", "low", "Recorded in Lugisu; confirm for Lubukusu."],
             ], scene(S.visitElder, ["elder", "luy-bxk-u1-l1-1"], ["elder", "luy-bxk-u1-l1-2"], ["you", "luy-bxk-u1-l1-3"])),
         ]),
-        unit("luy-bxk-u2", U.numbers, "Webuye", BLUE, numbers("luy-bxk-u2", ["ndala", "chibili", "chitaru", "chinne", "chirano", "sita", "saba", "munane", "tisa", "likhumi"], "medium", { 0: "Also 'silala'.", 8: "Also 'nasienda'.", 9: "Sources differ: 'likhumi' / 'kamakhumi'." })),
+        unit("luy-bxk-u2", U.numbers, "Webuye", BLUE, numbers("luy-bxk-u2", ["ndala", "chibili", "chitaru", "chinne", "chirano", "sita", "saba", "munane", "tisa", "likhumi"], "medium", { 0: "Also 'silala'.", 7: "The Bukusu Bible spells it 'munaane'.", 8: "Also 'nasienda'.", 9: "The Bukusu Bible has 'ekhumi' (ten) and 'kamakhumi' (tens)." })),
         unit("luy-bxk-u3", U.people, "Kimilili", GREEN, [
             lesson("luy-bxk-u3-l1", U.people, [
                 ["omundu", "person", "mtu", "medium"], ["omukhana", "girl", "msichana", "medium"],
                 ["omusakhulu", "elder (old man)", "mzee", "medium"], ["maayi", "mother", "mama", "medium"],
-                ["engo", "house / home", "nyumba", "medium"], ["Wele", "God", "Mungu", "medium"],
+                ["engo", "house / home", "nyumba", "medium"], ["Wele", "God", "Mungu", "high"],
+            ]),
+            lesson("luy-bxk-u3-l2", tr("People and life", "Watu na maisha"), [
+                ["omukhasi", "woman", "mwanamke", "high"], ["Omwami", "Sir / Lord", "Bwana", "high", "A polite way to address a man (John 4:11)."],
+                ["omwana", "child", "mtoto", "high"], ["babaana", "children", "watoto", "high"],
+                ["bulamu", "life", "uzima", "high"], ["kumubili", "body", "mwili", "high"],
+            ]),
+        ]),
+        unit("luy-bxk-u4", tr("Sky and water", "Anga na maji"), "Kitale", YELLOW, [
+            lesson("luy-bxk-u4-l1", tr("The sky", "Angani"), [
+                ["enyanga", "sun", "jua", "high", "Genesis 37:9."], ["kumwesi", "moon", "mwezi", "high"],
+                ["ching'enieesi", "stars", "nyota", "high"], ["efula", "rain", "mvua", "high"],
+                ["kameechi", "water", "maji", "high"], ["sibala", "land / country", "nchi", "high"],
+            ]),
+        ]),
+        unit("luy-bxk-u5", U.time, "Malakisi", PURPLE, [
+            lesson("luy-bxk-u5-l1", U.time, [
+                ["endaalo", "day", "siku", "high", "Plural: chindaalo."], ["siilo", "night", "usiku", "high"],
+                ["kumuusi", "daytime", "mchana", "high"], ["busia", "tomorrow", "kesho", "high", "Matthew 6:34."],
+                ["ekhumi ne ndala", "eleven", "kumi na moja", "high"], ["kamakhumi kane", "forty", "arobaini", "high"],
+            ]),
+            lesson("luy-bxk-u5-l2", U.everyday, [
+                ["siakhulia", "food", "chakula", "high"], ["chingubo", "clothes", "nguo", "high", "One garment: engubo."],
+                ["liloba", "ground / soil", "ardhi / udongo", "high"], ["wandaayo", "your brother", "ndugu yako", "high"],
             ]),
         ]),
     ],
@@ -574,7 +629,7 @@ const maragoli = {
     frames: { thanks: "luy-rag-u1-l1-4", bye: "luy-rag-u1-l2-3", greet: ["luy-rag-u1-l1-2", "luy-rag-u1-l1-3"] },
     family: "Luhya", name: "Maragoli", nativeName: "Lulogooli",
     speakers: "Vihiga County",
-    dialectNote: "Phrases from community-contributed lists; numbers are low-confidence drafts. Needs a Maragoli reviewer.",
+    dialectNote: "Greetings come from community lists. The later stops use words checked against the Logooli Bible (Kitabu Kitakatifu, Bible Society of Kenya). Numbers are still drafts for a Maragoli reviewer.",
     cast: cast(["Guku Mideva", "👵🏾"], "Kavai", "Mama Ambasa", "Mudeizi", tr("Grandparent", "Babu au bibi")),
     units: [
         unit("luy-rag-u1", U.greet, "Mbale", RED, [
@@ -598,6 +653,29 @@ const maragoli = {
                 ["guku", "grandparent", "babu / bibi", "medium"],
                 ["Amba hanu", "Come here", "Njoo hapa", "medium"],
                 ["Nthidha yengo", "I am going home", "Ninaenda nyumbani", "medium"],
+            ]),
+        ]),
+        unit("luy-rag-u4", tr("Sky and land", "Anga na nchi"), "Kaimosi", YELLOW, [
+            lesson("luy-rag-u4-l1", tr("The sky", "Angani"), [
+                ["liuva", "sun", "jua", "high", "Genesis 37:9."], ["mweli", "moon", "mwezi", "high"],
+                ["zing'ereng'ani", "stars", "nyota", "high"], ["imbura", "rain", "mvua", "high"],
+                ["ligulu", "sky", "anga", "high"], ["lirova", "earth / land", "dunia / ardhi", "high"],
+            ]),
+        ]),
+        unit("luy-rag-u5", U.people, "Hamisi", PURPLE, [
+            lesson("luy-rag-u5-l1", U.people, [
+                ["mundu", "person", "mtu", "high"], ["avandu", "people", "watu", "high"],
+                ["baba", "father", "baba", "high"], ["inyumba", "house", "nyumba", "high"],
+                ["kivala", "country / land", "nchi", "high"], ["mulimi", "field / farm", "shamba", "high"],
+            ]),
+            lesson("luy-rag-u5-l2", U.animals, [
+                ["amanyonyi", "birds", "ndege", "high"], ["zinyama", "animals", "wanyama", "high"],
+                ["amagondi", "sheep (many)", "kondoo", "high"], ["mwayi", "herder / shepherd", "mchungaji", "high", "John 10:11."],
+                ["mulahi", "good", "mwema", "high"], ["Nyasaye", "God", "Mungu", "high"],
+            ]),
+            lesson("luy-rag-u5-l3", U.time, [
+                ["madiku", "days", "siku", "high"], ["vudiku", "night", "usiku", "high"],
+                ["mbasu", "daytime", "mchana", "high"], ["mihiga", "years", "miaka", "high"],
             ]),
         ]),
     ],
