@@ -1,4 +1,8 @@
-import type { Exercise, Item } from "./types.js";
+import { getLang } from "./i18n.js";
+import type { CastMember, Exercise, Item, Scene } from "./types.js";
+
+/** The item's meaning in the learner's base language. */
+export const meaning = (i: Item): string => (getLang() === "sw" ? i.swahili || i.english : i.english);
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -19,27 +23,27 @@ function uniqueBy<T>(arr: T[], key: (x: T) => string): T[] {
   });
 }
 
-function distractors(item: Item, pool: Item[], field: "target" | "english", n: number): string[] {
-  const others = uniqueBy(
-    pool.filter((p) => p.id !== item.id && p[field].toLowerCase() !== item[field].toLowerCase()),
-    (p) => p[field],
-  );
-  return shuffle(others).slice(0, n).map((p) => p[field]);
+function distractors(item: Item, pool: Item[], get: (i: Item) => string, n: number): string[] {
+  const others = uniqueBy(pool.filter((p) => p.id !== item.id && get(p).toLowerCase() !== get(item).toLowerCase()), get);
+  return shuffle(others).slice(0, n).map(get);
 }
 
+const target = (i: Item) => i.target;
 const isPhrase = (s: string) => s.trim().split(/\s+/).length > 1;
 
-function choose(item: Item, pool: Item[], direction: "to-en" | "to-target"): Exercise {
-  const field = direction === "to-en" ? "english" : "target";
-  const answer = item[field];
+function choose(item: Item, pool: Item[], direction: "to-base" | "to-target"): Exercise {
+  const get = direction === "to-base" ? meaning : target;
+  const answer = get(item);
   return {
-    kind: "choose",
-    item,
-    direction,
-    prompt: direction === "to-en" ? item.target : item.english,
+    kind: "choose", item, direction,
+    prompt: direction === "to-base" ? item.target : meaning(item),
     answer,
-    options: shuffle([answer, ...distractors(item, pool, field, 3)]),
+    options: shuffle([answer, ...distractors(item, pool, get, 3)]),
   };
+}
+
+export function tokens(s: string): string[] {
+  return s.replace(/[?!.,]/g, "").trim().split(/\s+/).filter(Boolean);
 }
 
 function build(item: Item, pool: Item[]): Exercise {
@@ -50,32 +54,42 @@ function build(item: Item, pool: Item[]): Exercise {
   return { kind: "build", item, bank };
 }
 
-export function tokens(s: string): string[] {
-  return s.replace(/[?!.,]/g, "").trim().split(/\s+/).filter(Boolean);
+export function sceneExercise(scene: Scene, cast: CastMember[], find: (id: string) => Item | undefined, pool: Item[]): Exercise | null {
+  const lines = scene.lines.map((l) => ({ who: l.who, item: find(l.item) })).filter((l): l is { who: string; item: Item } => !!l.item);
+  const last = lines[lines.length - 1];
+  if (!last || last.who !== "you") return null;
+  return {
+    kind: "scene", scene, cast,
+    lines: lines.slice(0, -1),
+    answer: last.item,
+    options: shuffle([last.item.target, ...distractors(last.item, pool, target, 2)]),
+  };
 }
 
 /** Build the exercise queue for one lesson. `pool` supplies wrong-answer options. */
-export function generateLesson(items: Item[], pool: Item[]): Exercise[] {
-  const intro = items.map((it) => choose(it, pool, "to-en"));
+export function generateLesson(items: Item[], pool: Item[], story?: Exercise | null): Exercise[] {
+  const intro = items.map((it) => choose(it, pool, "to-base"));
   const later: Exercise[] = [];
 
   for (const [i, it] of items.entries()) {
-    if (it.audio) later.push({ kind: "listen", item: it, options: shuffle([it.target, ...distractors(it, pool, "target", 3)]) });
+    if (it.audio) later.push({ kind: "listen", item: it, options: shuffle([it.target, ...distractors(it, pool, target, 3)]) });
     else if (isPhrase(it.target)) later.push(build(it, pool));
     else if (i % 2 === 0) later.push({ kind: "type", item: it });
     else later.push(choose(it, pool, "to-target"));
   }
 
-  const matchItems = uniqueBy(uniqueBy(shuffle(items), (x) => x.english), (x) => x.target).slice(0, 4);
+  const matchItems = uniqueBy(uniqueBy(shuffle(items), meaning), target).slice(0, 4);
   if (matchItems.length >= 3) later.splice(Math.floor(later.length / 2), 0, { kind: "match", items: matchItems });
 
-  return [...intro, ...shuffle(later)].slice(0, 14);
+  const queue = [...intro, ...shuffle(later)].slice(0, story ? 13 : 14);
+  if (story) queue.push(story);   // the story scene closes the lesson
+  return queue;
 }
 
-/** Practice session from weak items: no intro step, straight to recall. */
+/** Practice session from weak items: straight to recall. */
 export function generatePractice(items: Item[], pool: Item[]): Exercise[] {
   return shuffle(items).map((it, i) =>
-    isPhrase(it.target) ? build(it, pool) : i % 2 ? { kind: "type", item: it } as Exercise : choose(it, pool, "to-target"),
+    isPhrase(it.target) ? build(it, pool) : i % 2 ? ({ kind: "type", item: it } as Exercise) : choose(it, pool, "to-target"),
   );
 }
 

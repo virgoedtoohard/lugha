@@ -36,7 +36,7 @@ export function renderReview(root: HTMLElement): void {
     <h1>Review content</h1>
     <p class="muted">Correct each word or phrase, record how a native speaker says it, then mark it reviewed. Learners see your changes straight away.</p>
     <div class="review-controls">
-      <select id="rv-course">${courses.map((c) => `<option value="${c.code}" ${c.code === course.code ? "selected" : ""}>${esc(c.nativeName)} (${esc(c.name)})</option>`).join("")}</select>
+      <select id="rv-course">${courses.map((c) => `<option value="${c.code}" ${c.code === course.code ? "selected" : ""}>${esc(c.family)}${c.family !== c.nativeName ? ` · ${esc(c.name === "General" ? "General" : c.nativeName)}` : ""}</option>`).join("")}</select>
       <select id="rv-filter">
         ${(["draft", "low", "reviewed", "all"] as const).map((f) => `<option value="${f}" ${f === filter ? "selected" : ""}>${{ draft: "Needs review", low: "Low confidence", reviewed: "Reviewed", all: "All items" }[f]}</option>`).join("")}
       </select>
@@ -60,6 +60,7 @@ function itemCard(i: Item): string {
     <div class="rv-head"><code>${i.id}</code><span class="chip ${i.status === "reviewed" ? "chip-ok" : i.confidence === "low" ? "chip-warn" : ""}">${i.status} · ${i.confidence}</span></div>
     <label>Word / phrase<input name="target" class="target-text" value="${esc(i.target)}"></label>
     <label>English<input name="english" value="${esc(i.english)}"></label>
+    <label>Kiswahili<input name="swahili" value="${esc(i.swahili)}"></label>
     <label>Note for learners (optional)<input name="note" value="${esc(i.note ?? "")}"></label>
     <div class="rv-row">
       <label>Confidence<select name="confidence">${(["low", "medium", "high"] as Confidence[]).map((c) => `<option ${c === i.confidence ? "selected" : ""}>${c}</option>`).join("")}</select></label>
@@ -119,6 +120,7 @@ function wireCard(card: HTMLElement, course: string, root: HTMLElement): void {
       course_code: course,
       target: val("target") || null,
       english: val("english") || null,
+      swahili: val("swahili") || null,
       note: val("note") || null,
       audio_url: audioUrl,
       status: val("status") as ReviewStatus,

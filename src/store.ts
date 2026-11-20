@@ -1,5 +1,5 @@
 import { COURSES } from "./content.js";
-import type { ContentOverride, Course, Item, Lesson, Progress } from "./types.js";
+import type { BaseLang, ContentOverride, Course, Item, Lesson, Progress, Unit } from "./types.js";
 
 const PROGRESS_KEY = "lugha.progress.v1";
 const OVERRIDES_KEY = "lugha.overrides.v1";
@@ -26,6 +26,7 @@ export function freshProgress(): Progress {
   return {
     version: 1,
     activeCourse: null,
+    base: "en",
     xp: 0,
     dailyXp: {},
     streak: 0,
@@ -161,6 +162,10 @@ export function setActiveCourse(code: string | null): void {
   mutate((p) => { p.activeCourse = code; });
 }
 
+export function setBase(base: BaseLang): void {
+  mutate((p) => { p.base = base; });
+}
+
 export function setDailyGoal(goal: number): void {
   mutate((p) => { p.dailyGoal = goal; });
 }
@@ -211,6 +216,7 @@ function applyOverride(item: Item): Item {
     ...item,
     target: o.target || item.target,
     english: o.english || item.english,
+    swahili: o.swahili || item.swahili,
     note: o.note ?? item.note,
     audio: o.audio_url || item.audio,
     status: o.status,
@@ -245,6 +251,18 @@ export function isUnlocked(course: Course, lessonId: string): boolean {
   const idx = lessons.findIndex((l) => l.id === lessonId);
   if (idx <= 0) return true;
   return (progress.completed[lessons[idx - 1].id] ?? 0) > 0;
+}
+
+export function unitDone(u: Unit): boolean {
+  return u.lessons.every((l) => (progress.completed[l.id] ?? 0) > 0);
+}
+
+export function unitsDone(course: Course): number {
+  return course.units.filter(unitDone).length;
+}
+
+export function findItem(course: Course, id: string): Item | undefined {
+  return allItems(course).find((i) => i.id === id);
 }
 
 export function courseCompletion(course: Course): number {

@@ -20,6 +20,7 @@ export function freshProgress() {
     return {
         version: 1,
         activeCourse: null,
+        base: "en",
         xp: 0,
         dailyXp: {},
         streak: 0,
@@ -151,6 +152,9 @@ export function completeLesson(lessonId) {
 export function setActiveCourse(code) {
     mutate((p) => { p.activeCourse = code; });
 }
+export function setBase(base) {
+    mutate((p) => { p.base = base; });
+}
 export function setDailyGoal(goal) {
     mutate((p) => { p.dailyGoal = goal; });
 }
@@ -209,6 +213,7 @@ function applyOverride(item) {
         ...item,
         target: o.target || item.target,
         english: o.english || item.english,
+        swahili: o.swahili || item.swahili,
         note: o.note ?? item.note,
         audio: o.audio_url || item.audio,
         status: o.status,
@@ -239,6 +244,15 @@ export function isUnlocked(course, lessonId) {
     if (idx <= 0)
         return true;
     return (progress.completed[lessons[idx - 1].id] ?? 0) > 0;
+}
+export function unitDone(u) {
+    return u.lessons.every((l) => (progress.completed[l.id] ?? 0) > 0);
+}
+export function unitsDone(course) {
+    return course.units.filter(unitDone).length;
+}
+export function findItem(course, id) {
+    return allItems(course).find((i) => i.id === id);
 }
 export function courseCompletion(course) {
     const lessons = allLessons(course);

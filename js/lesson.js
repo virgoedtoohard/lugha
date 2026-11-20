@@ -1,21 +1,15 @@
-import { checkTyped, shuffle, tokens } from "./exercises.js";
+import { bead, calabash, hearth } from "./art.js";
+import { checkTyped, meaning, shuffle, tokens } from "./exercises.js";
+import { L, t } from "./i18n.js";
 import { addXp, completeLesson, gainHeart, getProgress, loseHeart, MAX_HEARTS, msToNextHeart, recordAnswer, saveProgress } from "./store.js";
 import { $, $$, app, esc, fmtDuration, playAudio } from "./ui.js";
 let s = null;
 export function startSession(opts) {
     if (opts.mode === "lesson" && getProgress().hearts <= 0) {
-        outOfHearts(opts.onExit);
+        emptyCalabash(opts.onExit);
         return;
     }
-    s = {
-        ...opts,
-        queue: opts.exercises.slice(),
-        pos: 0,
-        total: opts.exercises.length,
-        mistakes: 0,
-        retried: new Set(),
-        started: Date.now(),
-    };
+    s = { ...opts, queue: opts.exercises.slice(), pos: 0, total: opts.exercises.length, mistakes: 0, retried: new Set(), started: Date.now() };
     renderExercise();
 }
 function draftChip(items) {
@@ -23,27 +17,33 @@ function draftChip(items) {
     if (!drafts.length)
         return "";
     const low = drafts.some((i) => i.confidence === "low");
-    return `<span class="chip ${low ? "chip-warn" : ""}" title="This content hasn't been checked by a native speaker yet">${low ? "Draft · low confidence" : "Draft · awaiting review"}</span>`;
+    return `<span class="chip ${low ? "chip-warn" : ""}" title="${t("draftTip")}">${low ? t("draftLow") : t("draft")}</span>`;
+}
+/** Progress shown as beads being threaded onto a string. */
+function beadString() {
+    const n = Math.min(s.total, 16);
+    const done = Math.round((s.pos / s.total) * n);
+    return `<div class="thread" aria-label="${s.pos} / ${s.total}">${Array.from({ length: n }, (_, i) => `<span class="tb ${i < done ? "on" : ""}" style="--c:${s.bead}"></span>`).join("")}</div>`;
 }
 function shell(inner, items) {
     const p = getProgress();
-    const pct = Math.round((s.pos / s.total) * 100);
     return `
   <div class="lesson">
     <header class="lesson-top">
-      <button class="icon-btn" id="quit" aria-label="Quit lesson">✕</button>
-      <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
-      ${s.mode === "lesson" ? `<span class="hearts" aria-label="${p.hearts} hearts">❤️ ${p.hearts}</span>` : `<span class="hearts">🎯</span>`}
+      <button class="icon-btn" id="quit" aria-label="${t("leave")}">✕</button>
+      ${beadString()}
+      ${s.mode === "lesson" ? `<span class="water" title="${t("calabash")}">${calabash(p.hearts)} ${p.hearts}</span>` : `<span class="water">🪣</span>`}
     </header>
     <main class="lesson-body">
       ${draftChip(items)}
       ${inner}
     </main>
     <footer class="lesson-foot" id="foot">
-      <button class="btn btn-primary btn-wide" id="check" disabled>Check</button>
+      <button class="btn btn-primary btn-wide" id="check" disabled>${t("check")}</button>
     </footer>
   </div>`;
 }
+const optBtn = (o, i, isTarget) => `<button class="opt ${isTarget ? "target-text" : ""}" data-v="${esc(o)}"><kbd>${i + 1}</kbd>${esc(o)}</button>`;
 function renderExercise() {
     if (!s)
         return;
@@ -55,38 +55,62 @@ function renderExercise() {
     const root = app();
     switch (ex.kind) {
         case "choose": {
-            const heading = ex.direction === "to-en" ? "What does this mean?" : "How do you say this?";
+            const toBase = ex.direction === "to-base";
             root.innerHTML = shell(`
-        <h2 class="ex-title">${heading}</h2>
+        <h2 class="ex-title">${toBase ? t("whatMeans") : t("howSay")}</h2>
         <div class="prompt">
-          ${ex.direction === "to-en" && ex.item.audio ? `<button class="speak" id="speak" aria-label="Play audio">🔊</button>` : ""}
-          <span class="${ex.direction === "to-en" ? "target-text" : ""}">${esc(ex.prompt)}</span>
+          ${toBase && ex.item.audio ? `<button class="speak" id="speak" aria-label="Play">🔊</button>` : ""}
+          <span class="${toBase ? "target-text" : ""}">${esc(ex.prompt)}</span>
         </div>
-        <div class="options">${ex.options.map((o, i) => `<button class="opt ${ex.direction === "to-target" ? "target-text" : ""}" data-v="${esc(o)}"><kbd>${i + 1}</kbd>${esc(o)}</button>`).join("")}</div>
+        <div class="options">${ex.options.map((o, i) => optBtn(o, i, !toBase)).join("")}</div>
       `, [ex.item]);
             selectable(ex.answer, ex.item);
             $("#speak")?.addEventListener("click", () => playAudio(ex.item.audio));
-            if (ex.direction === "to-en")
+            if (toBase)
                 playAudio(ex.item.audio);
             break;
         }
         case "listen": {
             root.innerHTML = shell(`
-        <h2 class="ex-title">What do you hear?</h2>
-        <div class="prompt"><button class="speak speak-big" id="speak" aria-label="Play audio">🔊</button></div>
-        <div class="options">${ex.options.map((o, i) => `<button class="opt target-text" data-v="${esc(o)}"><kbd>${i + 1}</kbd>${esc(o)}</button>`).join("")}</div>
+        <h2 class="ex-title">${t("hear")}</h2>
+        <div class="prompt center"><button class="speak speak-big" id="speak" aria-label="Play">🔊</button></div>
+        <div class="options">${ex.options.map((o, i) => optBtn(o, i, true)).join("")}</div>
       `, [ex.item]);
             selectable(ex.item.target, ex.item);
             $("#speak").addEventListener("click", () => playAudio(ex.item.audio));
             playAudio(ex.item.audio);
             break;
         }
+        case "scene": {
+            const who = (k) => ex.cast.find((c) => c.key === k);
+            root.innerHTML = shell(`
+        <div class="scene-tag">📖 ${t("story")} · ${esc(L(ex.scene.setting))}</div>
+        <div class="chat">
+          ${ex.lines.map((l) => {
+                const c = who(l.who);
+                const mine = l.who === "you";
+                return `<div class="bubble-row ${mine ? "mine" : ""}">
+              ${mine ? "" : `<span class="avatar" title="${esc(c ? `${c.name} · ${L(c.role)}` : "")}">${c?.avatar ?? "🙂"}</span>`}
+              <div class="bubble">${mine ? "" : `<span class="who">${esc(c?.name ?? "")}</span>`}
+                <span class="target-text">${esc(l.item.target)}</span>
+                <button class="peek" data-m="${esc(meaning(l.item))}">${esc(meaning(l.item))}</button>
+              </div></div>`;
+            }).join("")}
+          <div class="bubble-row mine"><div class="bubble ghost">…</div></div>
+        </div>
+        <h2 class="ex-title small-title">${t("whatReply")}</h2>
+        <div class="options">${ex.options.map((o, i) => optBtn(o, i, true)).join("")}</div>
+      `, [ex.answer, ...ex.lines.map((l) => l.item)]);
+            selectable(ex.answer.target, ex.answer);
+            $$(".peek").forEach((b) => b.addEventListener("click", () => b.classList.toggle("shown")));
+            break;
+        }
         case "type": {
             root.innerHTML = shell(`
-        <h2 class="ex-title">Type this in ${esc(courseName())}</h2>
-        <div class="prompt">${esc(ex.item.english)}</div>
-        <input class="type-input target-text" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type your answer" />
-        <p class="hint">Accent marks like ĩ and ũ count, but we'll go easy if you miss them.</p>
+        <h2 class="ex-title">${t("typeIn")} ${esc(s.course.nativeName)}</h2>
+        <div class="prompt">${esc(meaning(ex.item))}</div>
+        <input class="type-input target-text" id="answer" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <p class="hint">${t("accentsHint")}</p>
       `, [ex.item]);
             const input = $("#answer");
             const check = $("#check");
@@ -97,14 +121,14 @@ function renderExercise() {
             check.addEventListener("click", () => {
                 const v = checkTyped(input.value, ex.item.target);
                 input.disabled = true;
-                answer(v !== "wrong", ex.item, v === "accents" ? `Watch the accents: <b class="target-text">${esc(ex.item.target)}</b>` : undefined);
+                answer(v !== "wrong", ex.item, v === "accents" ? `${t("watchAccents")} <b class="target-text">${esc(ex.item.target)}</b>` : undefined);
             });
             break;
         }
         case "build": {
             root.innerHTML = shell(`
-        <h2 class="ex-title">Translate this sentence</h2>
-        <div class="prompt">${esc(ex.item.english)}</div>
+        <h2 class="ex-title">${t("buildTitle")}</h2>
+        <div class="prompt">${esc(meaning(ex.item))}</div>
         <div class="build-answer" id="built"></div>
         <div class="bank" id="bank">${ex.bank.map((w, i) => `<button class="word target-text" data-i="${i}">${esc(w)}</button>`).join("")}</div>
       `, [ex.item]);
@@ -125,18 +149,17 @@ function renderExercise() {
             }));
             check.addEventListener("click", () => {
                 const said = built.map((i) => ex.bank[i]).join(" ");
-                const v = checkTyped(said, tokens(ex.item.target).join(" "));
-                answer(v !== "wrong", ex.item);
+                answer(checkTyped(said, tokens(ex.item.target).join(" ")) !== "wrong", ex.item);
             });
             break;
         }
         case "match": {
             const left = shuffle(ex.items), right = shuffle(ex.items);
             root.innerHTML = shell(`
-        <h2 class="ex-title">Tap the matching pairs</h2>
+        <h2 class="ex-title">${t("matchTitle")}</h2>
         <div class="match">
           <div class="col">${left.map((it) => `<button class="opt tile target-text" data-id="${it.id}" data-side="l">${esc(it.target)}</button>`).join("")}</div>
-          <div class="col">${right.map((it) => `<button class="opt tile" data-id="${it.id}" data-side="r">${esc(it.english)}</button>`).join("")}</div>
+          <div class="col">${right.map((it) => `<button class="opt tile" data-id="${it.id}" data-side="r">${esc(meaning(it))}</button>`).join("")}</div>
         </div>
       `, ex.items);
             let picked = null;
@@ -160,10 +183,8 @@ function renderExercise() {
                     matched++;
                     if (item)
                         recordAnswer(item.id, true);
-                    if (matched === ex.items.length) {
-                        $("#check").disabled = false;
-                        setTimeout(() => answer(true, ex.items[0], slips ? `${slips} slip${slips > 1 ? "s" : ""} — keep practising these.` : undefined, true), 250);
-                    }
+                    if (matched === ex.items.length)
+                        setTimeout(() => answer(true, ex.items[0], slips ? `${slips} ×` : undefined, true), 250);
                 }
                 else {
                     slips++;
@@ -182,14 +203,10 @@ function renderExercise() {
 function confirmQuit() {
     const foot = $("#foot");
     foot.className = "lesson-foot";
-    foot.innerHTML = `<div class="quit-row"><span>Quit? Progress in this lesson will be lost.</span>
-    <button class="btn" id="stay">Keep going</button><button class="btn btn-danger" id="leave">Quit</button></div>`;
+    foot.innerHTML = `<div class="quit-row"><span>${t("quitQ")}</span>
+    <button class="btn" id="stay">${t("keepGoing")}</button><button class="btn btn-danger" id="leave">${t("leave")}</button></div>`;
     $("#stay").addEventListener("click", () => renderExercise());
     $("#leave").addEventListener("click", () => { const exit = s?.onExit; s = null; saveProgress(getProgress()); exit?.(); });
-}
-function courseName() {
-    const code = getProgress().activeCourse;
-    return { kik: "Gĩkũyũ", luo: "Dholuo", luy: "Luhya", kam: "Kĩkamba", kln: "Kalenjin" }[code ?? ""] ?? "the language";
 }
 function selectable(correct, item) {
     let chosen = null;
@@ -239,15 +256,16 @@ function answer(correct, item, extra, skipRecord = false) {
     }
     const foot = $("#foot");
     foot.className = `lesson-foot ${correct ? "good" : "bad"}`;
-    const solution = ex.kind === "match" ? "" : `<div class="solution">${correct ? "" : "Correct answer:"} <b class="target-text">${esc(item.target)}</b> = ${esc(item.english)}</div>`;
+    const solution = ex.kind === "match" ? "" :
+        `<div class="solution">${correct ? "" : t("correctAns")} <b class="target-text">${esc(item.target)}</b> = ${esc(meaning(item))}</div>`;
     foot.innerHTML = `
     <div class="feedback">
-      <div class="fb-head">${correct ? "✓ Nice!" : "✗ Not quite"}</div>
+      <div class="fb-head">${correct ? `${bead(s.bead, 22)} ${t("nice")}` : `💧 ${t("notQuite")}`}</div>
       ${solution}
       ${extra ? `<div class="fb-extra">${extra}</div>` : ""}
       ${item.note && ex.kind !== "match" ? `<div class="fb-note">💡 ${esc(item.note)}</div>` : ""}
     </div>
-    <button class="btn ${correct ? "btn-primary" : "btn-danger"} btn-wide" id="next">Continue</button>`;
+    <button class="btn ${correct ? "btn-primary" : "btn-danger"} btn-wide" id="next">${t("cont")}</button>`;
     const next = $("#next");
     next.focus();
     const go = () => {
@@ -257,7 +275,7 @@ function answer(correct, item, extra, skipRecord = false) {
         if (s.mode === "lesson" && getProgress().hearts <= 0) {
             const exit = s.onExit;
             s = null;
-            outOfHearts(exit);
+            emptyCalabash(exit);
             return;
         }
         s.pos++;
@@ -277,37 +295,37 @@ function finish() {
     s = null;
     const accuracy = Math.round((Math.max(0, sess.total - sess.mistakes) / sess.total) * 100);
     const perfect = sess.mistakes === 0;
-    const xp = sess.mode === "lesson" ? 10 + (perfect ? 5 : 0) : 5;
+    const beads = sess.mode === "lesson" ? 10 + (perfect ? 5 : 0) : 5;
     if (sess.mode === "lesson" && sess.lessonId)
         completeLesson(sess.lessonId);
     if (sess.mode === "practice" && getProgress().hearts < MAX_HEARTS)
         gainHeart();
-    addXp(xp);
+    addXp(beads);
     const secs = Math.round((Date.now() - sess.started) / 1000);
     const p = getProgress();
     app().innerHTML = `
     <div class="done-screen">
-      <div class="done-badge">${perfect ? "🌟" : "🎉"}</div>
-      <h1>${sess.mode === "lesson" ? "Lesson complete!" : "Practice complete!"}</h1>
+      <div class="done-art">${bead(sess.bead, 64)}</div>
+      <h1>${sess.mode === "lesson" ? t("lessonDone") : t("practiceDone")}</h1>
       <p class="muted">${esc(sess.title)}</p>
       <div class="stats-row">
-        <div class="stat"><span class="stat-n">+${xp}</span><span class="stat-l">XP</span></div>
-        <div class="stat"><span class="stat-n">${accuracy}%</span><span class="stat-l">Accuracy</span></div>
-        <div class="stat"><span class="stat-n">${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}</span><span class="stat-l">Time</span></div>
+        <div class="stat"><span class="stat-n">+${beads}</span><span class="stat-l">${t("beadsEarned")}</span></div>
+        <div class="stat"><span class="stat-n">${accuracy}%</span><span class="stat-l">${t("accuracy")}</span></div>
+        <div class="stat"><span class="stat-n">${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}</span><span class="stat-l">${t("time")}</span></div>
       </div>
-      <p class="streak-line">🔥 ${p.streak}-day streak${sess.mode === "practice" ? " · ❤️ +1 heart" : ""}</p>
-      <button class="btn btn-primary btn-wide" id="cont">Continue</button>
+      <p class="streak-line">${hearth(true, 26)} ${t("fireKept", { n: p.streak, d: p.streak === 1 ? t("day") : t("days") })}${sess.mode === "practice" ? ` · 💧 +1 ${t("refill")}` : ""}</p>
+      <button class="btn btn-primary btn-wide" id="cont">${t("cont")}</button>
     </div>`;
     $("#cont").addEventListener("click", sess.onExit);
 }
-function outOfHearts(onExit) {
+function emptyCalabash(onExit) {
     app().innerHTML = `
     <div class="done-screen">
-      <div class="done-badge">💔</div>
-      <h1>Out of hearts</h1>
-      <p class="muted">Next heart in ${fmtDuration(msToNextHeart())}. Practise words you've already learned to earn one back now.</p>
-      <a class="btn btn-primary btn-wide" href="#/practice">Practise to earn a heart</a>
-      <button class="btn btn-wide" id="back">Back to lessons</button>
+      <div class="done-art">${calabash(0, 5, 80)}</div>
+      <h1>${t("emptyTitle")}</h1>
+      <p class="muted">${t("emptyBody", { t: fmtDuration(msToNextHeart()) })}</p>
+      <a class="btn btn-primary btn-wide" href="#/kisima">${t("goWell")}</a>
+      <button class="btn btn-wide" id="back">${t("backSafari")}</button>
     </div>`;
     $("#back").addEventListener("click", onExit);
 }

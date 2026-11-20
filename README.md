@@ -2,6 +2,17 @@
 
 A phone-first web app for learning Gĩkũyũ, Dholuo, Luhya, Kĩkamba and Kalenjin in short daily lessons. People can install it on their home screen, and it works offline.
 
+**What makes it Lugha (not a Duolingo copy)**
+- **The journey (Safari):** each unit is a town on a winding road through the region where the language is spoken. Kikuyu goes Nyeri → Murang'a → Kirinyaga → Kiambu → Nyandarua.
+- **Shanga (beads), not XP:** each finished lesson threads a bead in the unit's colour onto your necklace, and lesson progress fills a string of beads.
+- **Hearth fire, not a streak flame:** keep the three-stone fire burning by learning every day.
+- **A calabash of water, not hearts:** a wrong answer spills a sip. Refill it over time, or by practising at the **well (Kisima)**.
+- **Your boma:** finishing units builds your homestead piece by piece — a hut, a granary, cattle, a second hut and acacia trees, then a fence and the family hearth.
+- **Story scenes:** recurring characters (a grandmother, a friend, a market seller, a matatu conductor) speak to you, and you pick the right reply. Tap a speech bubble's blurred line to reveal its meaning.
+- **English or Kiswahili:** learners choose which language they learn through, and the whole interface switches with it.
+
+**Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Nyore) and Kalenjin (General, Kipsigis, Nandi).
+
 **What's in it**
 - **Courses:** 5 languages, each with Greetings, Numbers and Home & family units laid out on a lesson path that unlocks in order.
 - **Exercise types:** meaning check, "how do you say", tap-the-pairs, sentence building, typing and listening. Listening exercises turn on automatically once an item has audio.

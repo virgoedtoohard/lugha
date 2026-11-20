@@ -61,6 +61,7 @@ create table if not exists public.content_overrides (
   reviewed_by uuid references auth.users(id),
   updated_at timestamptz not null default now()
 );
+alter table public.content_overrides add column if not exists swahili text;
 alter table public.content_overrides enable row level security;
 drop policy if exists "anyone can read content" on public.content_overrides;
 create policy "anyone can read content" on public.content_overrides for select using (true);
