@@ -31,7 +31,7 @@ How speech checking works: no speech recogniser exists yet for these languages, 
 
 **Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Wanga, Nyore) and Kalenjin (General, Kipsigis, Nandi).
 
-**Sources worth giving reviewers:** the Luwanga–English Dictionary (Anangwe & Marlo, 2008 draft), which the Wanga course is built from, and the Nyore Bible "Ebaibo Inzienukhu" (Bible Society of Kenya, on bible.com) for checking Olunyole spelling. The Bible's reuse terms aren't stated, so its text isn't copied into the app.
+**Sources worth giving reviewers:** the Luwanga–English Dictionary (Anangwe & Marlo, 2008 draft), which the Wanga course is built from, and the Nyore Bible "Ebaibo Inzienukhu" (Bible Society of Kenya, on bible.com) which most of the Nyore course's words were matched against, verse by verse. Only single words are used; no verse text is copied into the app.
 
 **What's in it**
 - **Conversations and your guide**

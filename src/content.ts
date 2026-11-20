@@ -12,6 +12,9 @@
 //  - Luo greetings/numbers: Wikivoyage Luo phrasebook
 //  - Kalenjin "Kitachin", "Ata?": Omniglot Tugen phrases
 //  - Nyore words: Wikipedia Luhya comparative table
+//  - Nyore (Olunyole): single words matched to their verses in Ebaibo Inzienukhu
+//    (Bible Society of Kenya, 2019, bible.com version 2882), e.g. GEN 1, 7:12, 15:5, 37:9,
+//    EXO 9:3, MAT 2:11, 5:13-15, 7:24, 8:13, JHN 4:11, 6:51, LUK 5:4, 12:28, 15:7. No verses are copied.
 //  - Wanga (Oluwanga): Anangwe & Marlo, Luwanga–English Dictionary, draft of 2008
 //    (re-translation of Appleby's 1943 Luhya–English Vocabulary, recorded by a native speaker)
 
@@ -639,15 +642,83 @@ const nyore: Course = {
   frames: { greet: ["luy-nyd-u1-l1-1", "luy-nyd-u1-l1-1"] },
   family: "Luhya", name: "Nyore", nativeName: "Olunyole",
   speakers: "Luanda and Emuhaya, Vihiga County",
-  dialectNote: "Very little Olunyole is published online. This starter course needs a Nyore reviewer to grow it.",
+  dialectNote: "Most words here were read off the Olunyole Bible, Ebaibo Inzienukhu (Bible Society of Kenya, 2019), by matching each word to its verse. Only single words are used, never verses. A Nyore reviewer should still check them.",
   cast: cast(["Guku Anyango", "👵🏾"], "Omondi", "Mama Khayanga", "Ominde", tr("Grandparent", "Babu au bibi")),
   units: [
     unit("luy-nyd-u1", tr("First words", "Maneno ya kwanza"), "Luanda", RED, [
       lesson("luy-nyd-u1-l1", tr("First words", "Maneno ya kwanza"), [
         ["Mulembe", "Hello (peace)", "Salamu (amani)", "medium", "Shared across Luhya varieties."],
-        ["ise", "I / me", "mimi", "medium"],
-        ["amang'ana", "words", "maneno", "medium"],
+        ["ise", "I / me", "mimi", "high"],
+        ["amang'ana", "words / matters", "maneno / mambo", "high"],
         ["indebe", "chair", "kiti", "medium"],
+      ]),
+      lesson("luy-nyd-u1-l2", tr("Short sayings", "Misemo mifupi"), [
+        ["Oraria tawe", "Don't be afraid", "Usiogope", "high", "Genesis 15:1."],
+        ["Tsia ingo", "Go home", "Nenda nyumbani", "high", "Matthew 8:13 has 'Tsia ingo uwo', go to your home."],
+        ["tawe", "not / no", "si / hapana", "high", "Comes at the end of the sentence."],
+        ["hano", "here", "hapa", "high"],
+        ["luno", "now", "sasa", "medium"],
+        ["Omwami", "Sir / Lord", "Bwana", "high", "A polite way to address a man (John 4:11)."],
+      ]),
+    ]),
+    unit("luy-nyd-u2", U.people, "Emuhaya", BLUE, [
+      lesson("luy-nyd-u2-l1", U.people, [
+        ["omundu", "person", "mtu", "high"], ["abandu", "people", "watu", "high"],
+        ["omusaatsa", "man", "mwanamume", "high"], ["omukhasi", "woman", "mwanamke", "high"],
+        ["omwana", "child", "mtoto", "high"], ["Papa", "father", "baba", "high"],
+      ]),
+      lesson("luy-nyd-u2-l2", U.numbers, [
+        ["ndala", "one", "moja", "high"],
+        ["b'bili", "two", "mbili", "medium", "The start of the word changes with the noun counted."],
+        ["likhumi", "ten", "kumi", "high"],
+        ["likhumi nandala", "eleven", "kumi na moja", "high", "Ten and one (Genesis 37:9)."],
+        ["amakhumi kane", "forty", "arobaini", "high", "Four tens (Genesis 7:12)."],
+      ]),
+    ]),
+    unit("luy-nyd-u3", U.home, "Esibuye", GREEN, [
+      lesson("luy-nyd-u3-l1", U.aroundHome, [
+        ["inyumba", "house", "nyumba", "high"], ["ingo", "home", "nyumbani", "high"],
+        ["esitaho", "well", "kisima", "high"], ["etaya", "lamp", "taa", "high"],
+        ["injila", "road / way", "njia", "high"], ["litaala", "town", "mji", "high"],
+      ]),
+      lesson("luy-nyd-u3-l2", U.food, [
+        ["amaatsi", "water", "maji", "high"], ["omukaati", "bread", "mkate", "high"],
+        ["inyama", "meat", "nyama", "high"], ["omunyu", "salt", "chumvi", "high"],
+        ["tsisuche", "fish (many)", "samaki", "medium", "Genesis 1:28 spells it tsisutse."],
+      ]),
+    ]),
+    unit("luy-nyd-u4", U.animals, "Emusire", YELLOW, [
+      lesson("luy-nyd-u4-l1", U.animals, [
+        ["ing'ombe", "cow", "ng'ombe", "medium", "The Bible has the plural, tsing'ombe."],
+        ["imbusi", "goat", "mbuzi", "medium", "The Bible has the plural, tsimbusi."],
+        ["likondi", "sheep", "kondoo", "medium", "The Bible has the plural, makondi."],
+        ["ipunda", "donkey", "punda", "medium", "The Bible has the plural, tsipunda."],
+        ["linyonyi", "bird", "ndege", "high"], ["esolo", "animal", "mnyama", "high"],
+      ]),
+    ]),
+    unit("luy-nyd-u5", U.nature, "Wekhomo", TEAL, [
+      lesson("luy-nyd-u5-l1", tr("The sky", "Angani"), [
+        ["eliuba", "sun", "jua", "high"], ["omwesi", "moon", "mwezi", "high"],
+        ["tsinyininyini", "stars", "nyota", "high"], ["ifula", "rain", "mvua", "high"],
+        ["likulu", "sky", "anga", "high"], ["obulafu", "light", "mwanga", "high"],
+      ]),
+      lesson("luy-nyd-u5-l2", U.land, [
+        ["inyanza", "lake", "ziwa", "high"], ["esikulu", "hill", "kilima", "medium"],
+        ["omusaala", "tree", "mti", "medium", "Plural: emisaala."],
+        ["obunyasi", "grass", "nyasi", "high"], ["olwanda", "rock", "mwamba", "medium"],
+        ["omuyeka", "wind", "upepo", "medium"],
+      ]),
+    ]),
+    unit("luy-nyd-u6", U.time, "Ebusiratsi", PURPLE, [
+      lesson("luy-nyd-u6-l1", U.time, [
+        ["om'basu", "day (daytime)", "mchana", "high"], ["obutukhu", "night", "usiku", "high"],
+        ["amatukhu", "days", "siku", "high"], ["mukamba", "tomorrow", "kesho", "high"],
+        ["esiilima", "darkness", "giza", "medium"],
+      ]),
+      lesson("luy-nyd-u6-l2", U.body, [
+        ["omurwe", "head", "kichwa", "high"], ["omubili", "body", "mwili", "high"],
+        ["omwoyo", "heart", "moyo", "medium", "Plural: emioyo."],
+        ["obulamu", "life", "uzima", "high"], ["obusangali", "joy", "furaha", "high"],
       ]),
     ]),
   ],
