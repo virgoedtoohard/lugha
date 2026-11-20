@@ -1,8 +1,8 @@
 // Offline support: app shell is cached; lesson audio is cached as it's played.
-const CACHE = "lugha-v2";
+const CACHE = "lugha-v3";
 const SHELL = [
   "./", "index.html", "styles.css", "config.js", "manifest.webmanifest", "icon.svg",
-  "js/main.js", "js/art.js", "js/i18n.js", "js/cloud.js", "js/content.js", "js/exercises.js", "js/lesson.js",
+  "js/main.js", "js/art.js", "js/i18n.js", "js/audio.js", "js/speech.js", "js/cloud.js", "js/content.js", "js/exercises.js", "js/lesson.js",
   "js/review.js", "js/store.js", "js/types.js", "js/ui.js",
 ];
 

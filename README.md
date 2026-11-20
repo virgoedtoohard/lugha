@@ -11,10 +11,32 @@ A phone-first web app for learning Gĩkũyũ, Dholuo, Luhya, Kĩkamba and Kalenj
 - **Story scenes:** recurring characters (a grandmother, a friend, a market seller, a matatu conductor) speak to you, and you pick the right reply. Tap a speech bubble's blurred line to reveal its meaning.
 - **English or Kiswahili:** learners choose which language they learn through, and the whole interface switches with it.
 
+**Hearing and speaking**
+- **Pronunciation:** tap 🔊 on any word, or 🐢 to hear it slowly. Story scenes are read aloud line by line. Each word plays the best audio available:
+  1. a native-speaker recording that a reviewer uploaded in the Review panel;
+  2. a generated voice file (see "Generate pronunciation audio" below);
+  3. for the Bantu languages only (Gĩkũyũ, Kĩkamba, Luhya), the device's own Kiswahili voice as a rough approximation, labelled as such. You can switch this off in Boma settings.
+- **Say it aloud:** each lesson has two speaking turns. Tap the mic and say the word. If the browser can't recognise speech, you record yourself, compare with the model audio, and mark it yourself. "Can't speak now" pauses speaking for an hour.
+- **Speak your answers:** on any question where you produce a word (how do you say, type it, build the sentence, story reply), tap **🎤 Speak your answer** to answer out loud instead of tapping or typing.
+- **Town gate tests:** at the end of every stop on the journey there's a 10-question test. Score 80% to open the gate, which also marks the whole stop as done, so you can test out of units you already know. Tests don't use water.
+
+How speech checking works: no speech recogniser exists yet for these languages, so the app listens with the Kiswahili (Kenya) recogniser in Chrome, Edge and Android, and compares what it heard with the expected word. Matching is forgiving (it ignores accent marks and long vowels), and learners can always tap "I said it right". Speaking works best in Chrome on Android.
+
 **Courses:** Gĩkũyũ, Dholuo, Kĩkamba, Luhya (General, Bukusu, Maragoli, Nyore) and Kalenjin (General, Kipsigis, Nandi).
 
 **What's in it**
-- **Courses:** 5 languages, each with Greetings, Numbers and Home & family units laid out on a lesson path that unlocks in order.
+- **Hearing and speaking**
+- **Pronunciation:** tap 🔊 on any word, or 🐢 to hear it slowly. Story scenes are read aloud line by line. Each word plays the best audio available:
+  1. a native-speaker recording that a reviewer uploaded in the Review panel;
+  2. a generated voice file (see "Generate pronunciation audio" below);
+  3. for the Bantu languages only (Gĩkũyũ, Kĩkamba, Luhya), the device's own Kiswahili voice as a rough approximation, labelled as such. You can switch this off in Boma settings.
+- **Say it aloud:** each lesson has two speaking turns. Tap the mic and say the word. If the browser can't recognise speech, you record yourself, compare with the model audio, and mark it yourself. "Can't speak now" pauses speaking for an hour.
+- **Speak your answers:** on any question where you produce a word (how do you say, type it, build the sentence, story reply), tap **🎤 Speak your answer** to answer out loud instead of tapping or typing.
+- **Town gate tests:** at the end of every stop on the journey there's a 10-question test. Score 80% to open the gate, which also marks the whole stop as done, so you can test out of units you already know. Tests don't use water.
+
+How speech checking works: no speech recogniser exists yet for these languages, so the app listens with the Kiswahili (Kenya) recogniser in Chrome, Edge and Android, and compares what it heard with the expected word. Matching is forgiving (it ignores accent marks and long vowels), and learners can always tap "I said it right". Speaking works best in Chrome on Android.
+
+**Courses:** 5 languages, each with Greetings, Numbers and Home & family units laid out on a lesson path that unlocks in order.
 - **Exercise types:** meaning check, "how do you say", tap-the-pairs, sentence building, typing and listening. Listening exercises turn on automatically once an item has audio.
 - **Motivation:** XP, a daily goal, a day streak, a weekly XP chart, and hearts. A wrong answer costs one heart. Hearts come back one every 30 minutes, or you can earn one by finishing a Practice session.
 - **Practice mode:** drills the words each learner gets wrong most.
@@ -60,6 +82,20 @@ A **Review** tab appears for them the next time they open the app. Use `'admin'`
 ### Baking reviewed content into the app
 In the Review panel, **Export JSON** downloads a course with all corrections applied. You can paste those corrections back into `src/content.ts` from time to time, so a fresh install already has them.
 
+## Generate pronunciation audio (optional, recommended)
+`tools/generate_audio.py` voices every word with Meta's open MMS text-to-speech models and writes `audio/<course>/<id>.wav` plus `audio/manifest.json`. You need Python 3.10+ and about 3 GB of disk space for PyTorch; each language model downloads about 150 MB the first time.
+
+```powershell
+cd "$HOME\Projects\lugha"
+python -m pip install -r tools/requirements.txt
+tsc
+node tools/export-content.mjs
+python tools/generate_audio.py
+```
+The summary at the end shows which courses got a voice. Not every Kenyan language has an MMS model; any course without one falls back to recordings or the approximate voice. To try a different Kikuyu voice (fine-tuned on real Kikuyu speech): `python tools/generate_audio.py --course kik --force --model kik=gateremark/kikuyu-tts-v1`.
+
+⚠️ **Licence:** the facebook/mms-tts models are CC BY-NC 4.0, which means **non-commercial use only**. They're fine for testing. Before you charge for Lugha, replace them with native-speaker recordings (the Review panel's 🎙️ button) or a voice you're licensed to use commercially.
+
 ## Project layout
 ```
 index.html, styles.css, config.js, manifest.webmanifest, sw.js, icon.svg
@@ -70,9 +106,13 @@ src/          TypeScript source
   lesson.ts     lesson player
   review.ts     reviewer panel
   cloud.ts      Supabase: auth, sync, overrides, audio upload
+  audio.ts      pronunciation: recordings → generated audio → approximate voice
+  speech.ts     speech recognition, recording, answer matching
   main.ts       screens and navigation
 js/           compiled output (generated by tsc)
 supabase/schema.sql
+tools/        audio generator (generate_audio.py) and content exporter
+audio/        generated pronunciation files + manifest.json
 ```
 
 ## Ideas for later

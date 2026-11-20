@@ -1,10 +1,12 @@
 import { bead, boma, BOMA_PIECES, calabash, hearth, necklace, road } from "./art.js";
+import * as audio from "./audio.js";
 import * as cloud from "./cloud.js";
-import { generateLesson, generatePractice, sceneExercise } from "./exercises.js";
+import { generateLesson, generatePractice, generateTest, sceneExercise } from "./exercises.js";
 import { getLang, L, setLang, t } from "./i18n.js";
 import { startSession } from "./lesson.js";
 import { renderReview } from "./review.js";
-import { allItems, allLessons, courseCompletion, findItem, getCourse, getCourses, getProgress, isUnlocked, MAX_HEARTS, mergeProgress, msToNextHeart, onProgressChange, resetLocalProgress, saveProgress, setActiveCourse, setBase, setDailyGoal, setOverrides, todayXp, unitDone, unitsDone, weakItems, } from "./store.js";
+import * as speech from "./speech.js";
+import { allItems, allLessons, courseCompletion, findItem, getCourse, getCourses, getProgress, isUnlocked, MAX_HEARTS, mergeProgress, msToNextHeart, onProgressChange, resetLocalProgress, saveProgress, setActiveCourse, setBase, setDailyGoal, setOverrides, setSetting, speakingActive, todayXp, unitDone, unitsDone, weakItems, } from "./store.js";
 import { $, $$, app, esc, fmtDuration, toast } from "./ui.js";
 // ---------- Router ----------
 const ALIAS = { learn: "safari", practice: "kisima", profile: "boma" };
@@ -17,6 +19,8 @@ function route() {
     document.body.classList.remove("in-lesson");
     if (view === "lesson" && arg)
         return openLesson(arg);
+    if (view === "test" && arg)
+        return openTest(arg);
     if (view === "kisima" && arg === "go")
         return openPractice();
     if (view === "courses" || (!p.activeCourse && view !== "boma" && view !== "review"))
@@ -128,7 +132,10 @@ function renderSafari(root) {
     <h1 class="journey-title">${esc(course.nativeName)}${course.name !== course.nativeName && course.name !== "General" ? ` <span class="muted">· ${esc(course.name)}</span>` : ""}</h1>
     <p class="muted small">${esc(course.speakers)}</p>
     ${course.units.map((u, ui) => {
-        const r = road(u.lessons.length);
+        const r = road(u.lessons.length + 1);
+        const gateOpen = isUnlocked(course, u.lessons[0].id);
+        const best = p.tests[u.id];
+        const gpt = r.pts[u.lessons.length];
         const done = unitDone(u);
         return `
       <div class="stop">
@@ -138,7 +145,7 @@ function renderSafari(root) {
           <span class="post-unit">${t("unit")} ${ui + 1} · ${esc(L(u.title))}</span></div>
           ${done ? `<span class="post-done">${bead(u.bead, 22)}</span>` : ""}
         </div>
-        <div class="route" style="height:${110 * u.lessons.length + 30}px">
+        <div class="route" style="height:${110 * (u.lessons.length + 1) + 30}px">
           ${r.svg}
           ${u.lessons.map((l, li) => {
             const isDone = (p.completed[l.id] ?? 0) > 0;
@@ -150,6 +157,10 @@ function renderSafari(root) {
               <span class="node-label">${esc(L(l.title))}</span>
             </a>`;
         }).join("")}
+          <a class="node gate ${best !== undefined && best >= 80 ? "done" : gateOpen ? "open" : "locked"}" style="left:${gpt.x}%;top:${gpt.y}%;--bead:${u.bead}" ${gateOpen ? `href="#/test/${u.id}"` : `aria-disabled="true"`}>
+            <span class="node-dot">${gateOpen ? "🏁" : "🔒"}</span>
+            <span class="node-label">${t("gateTest")}${best !== undefined ? ` · ${t("bestScore", { s: best })}` : ""}</span>
+          </a>
         </div>
       </div>`;
     }).join("")}
@@ -219,6 +230,8 @@ function renderBoma(root) {
     </div>
     <div class="card settings">
       ${baseToggle()}
+      ${toggleRow("speaking", t("speakingSetting"), p.settings.speaking)}
+      ${toggleRow("voiceFallback", t("voiceSetting"), p.settings.voiceFallback)}
       <label class="row-label">${t("dailyGoal")}
         <select id="goal">${[[10, "casual"], [20, "regular"], [30, "serious"], [50, "intense"]].map(([g, k]) => `<option value="${g}" ${g === p.dailyGoal ? "selected" : ""}>${g} ${t("beadsEarned")} · ${t(k)}</option>`).join("")}</select>
       </label>
@@ -226,8 +239,19 @@ function renderBoma(root) {
     <div class="card" id="account">${accountBlock(configured, u)}</div>
   </section>`;
     wireBaseToggle();
+    $$("[data-setting]").forEach((cb) => cb.addEventListener("change", () => {
+        const key = cb.dataset.setting;
+        setSetting(key, cb.checked);
+        if (key === "voiceFallback")
+            audio.setFallback(cb.checked);
+        if (key === "speaking" && cb.checked)
+            setSetting("speakSnoozeUntil", 0);
+    }));
     $("#goal").addEventListener("change", (e) => setDailyGoal(+e.target.value));
     wireAccount();
+}
+function toggleRow(key, label, on) {
+    return `<label class="toggle-row"><span>${label}</span><input type="checkbox" data-setting="${key}" ${on ? "checked" : ""}><span class="switch" aria-hidden="true"></span></label>`;
 }
 function accountBlock(configured, u) {
     if (!configured) {
@@ -302,8 +326,41 @@ function openLesson(lessonId) {
         mode: "lesson", course, lessonId,
         title: `${u.place} · ${L(lesson.title)}`,
         bead: u.bead,
-        exercises: generateLesson(lesson.items, pool, story),
+        exercises: generateLesson(lesson.items, pool, { story, speak: canSpeakNow(), realAudio: realAudio(course) }),
         onExit: () => { location.hash = "#/safari"; route(); },
+    });
+}
+const canSpeakNow = () => speakingActive() && (speech.canRecognize() || speech.canRecord());
+const realAudio = (course) => (i) => { const src = audio.sourceFor(i, course.code); return src === "recorded" || src === "generated"; };
+function openTest(unitId) {
+    const p = getProgress();
+    const course = getCourse(p.activeCourse ?? "");
+    const u = course?.units.find((un) => un.id === unitId);
+    if (!course || !u || !isUnlocked(course, u.lessons[0].id)) {
+        location.hash = "#/safari";
+        return;
+    }
+    page("safari", (root) => {
+        root.innerHTML = `<section class="page gate-intro">
+      <div class="gate-art">🏁</div>
+      <h1>${t("gateTest")} · ${esc(u.place)}</h1>
+      <p class="muted">${t("testIntro")}</p>
+      ${speakingActive() && speech.canRecognize() ? `<p class="small">🎤 ${t("speakInstead")} ✓</p>` : ""}
+      ${p.tests[u.id] !== undefined ? `<p class="small">${t("bestScore", { s: p.tests[u.id] })}</p>` : ""}
+      <button class="btn btn-primary btn-wide" id="go">${t("startTest")}</button>
+      <a class="btn btn-wide" href="#/safari">${t("backSafari")}</a>
+    </section>`;
+        $("#go").addEventListener("click", () => {
+            document.body.classList.add("in-lesson");
+            const items = u.lessons.flatMap((l) => l.items);
+            startSession({
+                mode: "test", course, unit: u,
+                title: `${t("gateTest")} · ${u.place}`,
+                bead: u.bead,
+                exercises: generateTest(items, allItems(course), { speak: canSpeakNow(), realAudio: realAudio(course) }),
+                onExit: () => { location.hash = "#/safari"; route(); },
+            });
+        });
     });
 }
 function openPractice() {
@@ -337,6 +394,8 @@ async function syncFromCloud() {
 }
 async function boot() {
     setLang(getProgress().base);
+    audio.setFallback(getProgress().settings.voiceFallback);
+    await audio.loadManifest();
     window.addEventListener("hashchange", route);
     route();
     onProgressChange(() => cloud.pushProgressSoon(getProgress()));

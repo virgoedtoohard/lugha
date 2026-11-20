@@ -58,6 +58,7 @@ export type Exercise =
   | { kind: "build"; item: Item; bank: string[] }
   | { kind: "type"; item: Item }
   | { kind: "listen"; item: Item; options: string[] }
+  | { kind: "speak"; item: Item }
   | { kind: "scene"; scene: Scene; cast: CastMember[]; lines: { who: string; item: Item }[]; answer: Item; options: string[] };
 
 export interface ItemStat {
@@ -79,6 +80,8 @@ export interface Progress {
   completed: Record<string, number>;
   itemStats: Record<string, ItemStat>;
   dailyGoal: number;
+  settings: { speaking: boolean; voiceFallback: boolean; speakSnoozeUntil: number };
+  tests: Record<string, number>;        // unitId -> best test score (0..100)
   updatedAt: number;
 }
 

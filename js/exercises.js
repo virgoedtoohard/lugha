@@ -57,13 +57,15 @@ export function sceneExercise(scene, cast, find, pool) {
         options: shuffle([last.item.target, ...distractors(last.item, pool, target, 2)]),
     };
 }
+const listen = (it, pool) => ({ kind: "listen", item: it, options: shuffle([it.target, ...distractors(it, pool, target, 3)]) });
 /** Build the exercise queue for one lesson. `pool` supplies wrong-answer options. */
-export function generateLesson(items, pool, story) {
+export function generateLesson(items, pool, opts = {}) {
+    const { story, speak = false, realAudio = () => false } = opts;
     const intro = items.map((it) => choose(it, pool, "to-base"));
     const later = [];
     for (const [i, it] of items.entries()) {
-        if (it.audio)
-            later.push({ kind: "listen", item: it, options: shuffle([it.target, ...distractors(it, pool, target, 3)]) });
+        if (realAudio(it) && i % 2 === 1)
+            later.push(listen(it, pool));
         else if (isPhrase(it.target))
             later.push(build(it, pool));
         else if (i % 2 === 0)
@@ -74,10 +76,33 @@ export function generateLesson(items, pool, story) {
     const matchItems = uniqueBy(uniqueBy(shuffle(items), meaning), target).slice(0, 4);
     if (matchItems.length >= 3)
         later.splice(Math.floor(later.length / 2), 0, { kind: "match", items: matchItems });
-    const queue = [...intro, ...shuffle(later)].slice(0, story ? 13 : 14);
+    if (speak) {
+        // Two "say it aloud" turns, favouring short words — easiest for the recogniser
+        const picks = shuffle(items).sort((a, b) => a.target.length - b.target.length).slice(0, 2);
+        for (const it of picks)
+            later.splice(Math.floor(Math.random() * (later.length + 1)), 0, { kind: "speak", item: it });
+    }
+    const queue = [...intro, ...later.length ? shuffle(later) : []].slice(0, story ? 15 : 16);
     if (story)
         queue.push(story); // the story scene closes the lesson
     return queue;
+}
+/** Unit test: 10 recall questions across the whole unit, no introductions. */
+export function generateTest(items, pool, opts = {}) {
+    const { speak = false, realAudio = () => false } = opts;
+    const picks = shuffle(items).slice(0, 10);
+    const qs = picks.map((it, i) => {
+        if (speak && i < 2)
+            return { kind: "speak", item: it };
+        if (realAudio(it) && i % 4 === 3)
+            return listen(it, pool);
+        if (isPhrase(it.target))
+            return build(it, pool);
+        if (i % 3 === 0)
+            return choose(it, pool, "to-base");
+        return i % 2 ? { kind: "type", item: it } : choose(it, pool, "to-target");
+    });
+    return shuffle(qs);
 }
 /** Practice session from weak items: straight to recall. */
 export function generatePractice(items, pool) {

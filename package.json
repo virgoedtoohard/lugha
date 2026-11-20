@@ -1,0 +1,9 @@
+{
+  "name": "lugha",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p .",
+    "export-content": "node tools/export-content.mjs"
+  }
+}

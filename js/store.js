@@ -30,6 +30,8 @@ export function freshProgress() {
         completed: {},
         itemStats: {},
         dailyGoal: 20,
+        settings: { speaking: true, voiceFallback: true, speakSnoozeUntil: 0 },
+        tests: {},
         updatedAt: 0,
     };
 }
@@ -54,7 +56,11 @@ function load() {
     if (!raw)
         return freshProgress();
     try {
-        return { ...freshProgress(), ...JSON.parse(raw) };
+        const fresh = freshProgress();
+        const p = { ...fresh, ...JSON.parse(raw) };
+        p.settings = { ...fresh.settings, ...(p.settings ?? {}) };
+        p.tests = p.tests ?? {};
+        return p;
     }
     catch {
         return freshProgress();
@@ -155,6 +161,27 @@ export function setActiveCourse(code) {
 export function setBase(base) {
     mutate((p) => { p.base = base; });
 }
+export function setSetting(key, value) {
+    mutate((p) => { p.settings[key] = value; });
+}
+/** "Can't speak now": skip speaking exercises for an hour. */
+export function snoozeSpeaking() {
+    setSetting("speakSnoozeUntil", Date.now() + 60 * 60 * 1000);
+}
+export function speakingActive() {
+    return progress.settings.speaking && Date.now() > progress.settings.speakSnoozeUntil;
+}
+/** Record a unit test score; passing (80%+) counts every lesson in the unit as done. */
+export function recordTest(unit, score) {
+    const passed = score >= 80;
+    mutate((p) => {
+        p.tests[unit.id] = Math.max(p.tests[unit.id] ?? 0, score);
+        if (passed)
+            for (const l of unit.lessons)
+                p.completed[l.id] = Math.max(p.completed[l.id] ?? 0, 1);
+    });
+    return passed;
+}
 export function setDailyGoal(goal) {
     mutate((p) => { p.dailyGoal = goal; });
 }
@@ -182,6 +209,10 @@ export function mergeProgress(a, b) {
         merged.streak = later.streak;
         merged.lastActiveDay = later.lastActiveDay;
     }
+    merged.tests = { ...(a.tests ?? {}) };
+    for (const [k, v] of Object.entries(b.tests ?? {}))
+        merged.tests[k] = Math.max(merged.tests[k] ?? 0, v);
+    merged.settings = { ...freshProgress().settings, ...(newer.settings ?? {}) };
     merged.updatedAt = Math.max(a.updatedAt, b.updatedAt);
     return merged;
 }

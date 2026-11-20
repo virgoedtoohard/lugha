@@ -47,7 +47,8 @@ function numbers(prefix, words, conf, notes = {}) {
     ];
 }
 // Bead colours (Kenyan beadwork palette)
-const RED = "#B8322A", BLUE = "#2456A4", GREEN = "#3E7B3A", YELLOW = "#E2A21B", WHITE = "#EDE6D6", ORANGE = "#D9692B";
+const RED = "#B8322A", BLUE = "#2456A4", GREEN = "#3E7B3A", YELLOW = "#E2A21B", ORANGE = "#D9692B";
+const PURPLE = "#6A3D9A", TEAL = "#1F8A82", BLACK = "#2A2320";
 const U = {
     greet: tr("Greetings", "Salamu"),
     hello: tr("Saying hello", "Kusalimiana"),
@@ -63,12 +64,21 @@ const U = {
     whereTo: tr("Where to?", "Unaenda wapi?"),
     time: tr("Today & tomorrow", "Leo na kesho"),
     everyday: tr("Everyday words", "Maneno ya kila siku"),
+    family: tr("Family", "Familia"),
+    relatives: tr("Relatives", "Jamaa"),
+    menWomen: tr("Men, women & children", "Wanaume, wanawake na watoto"),
+    nature: tr("Animals & nature", "Wanyama na mazingira"),
+    animals: tr("Animals", "Wanyama"),
+    land: tr("Sky, land & water", "Anga, ardhi na maji"),
+    body: tr("The body", "Mwili"),
+    bodyParts: tr("Head to toe", "Kichwa hadi mguu"),
 };
 const S = {
     visitElder: tr("Visiting grandmother at home", "Kumtembelea bibi nyumbani"),
     newFriend: tr("Meeting a new friend", "Kukutana na rafiki mpya"),
     stall: tr("At the market stall", "Kwenye kibanda sokoni"),
     stage: tr("At the matatu stage", "Kwenye kituo cha matatu"),
+    photos: tr("Looking at family photos", "Kuangalia picha za familia"),
 };
 // ───────────────────────── Gĩkũyũ ─────────────────────────
 const kikuyu = {
@@ -127,6 +137,45 @@ const kikuyu = {
             lesson("kik-u5-l2", U.time, [
                 ["ũmũthĩ", "today", "leo", "high"], ["rũciũ", "tomorrow", "kesho", "high"],
                 ["ira", "yesterday", "jana", "high"], ["Ũka gũkũ", "Come here", "Njoo hapa", "medium"],
+            ]),
+        ]),
+        unit("kik-u6", U.family, "Thika", PURPLE, [
+            lesson("kik-u6-l1", U.relatives, [
+                ["cũcũ", "grandmother", "bibi", "high"],
+                ["guka", "grandfather", "babu", "high"],
+                ["mũrũ wa maitũ", "my brother", "kaka yangu", "high", "Literally 'son of my mother'."],
+                ["mwarĩ wa maitũ", "my sister", "dada yangu", "high", "Literally 'daughter of my mother'."],
+                ["Ũyũ nũũ?", "Who is this?", "Huyu ni nani?", "medium"],
+                ["Ũyũ nĩ guka", "This is grandfather", "Huyu ni babu", "medium"],
+            ], scene(S.photos, ["friend", "kik-u6-l1-5"], ["you", "kik-u6-l1-6"])),
+            lesson("kik-u6-l2", U.menWomen, [
+                ["mũtumia", "woman / wife", "mwanamke / mke", "high"],
+                ["mũthuuri", "man / husband", "mwanamume / mume", "high", "Also used for a respected elder."],
+                ["kahĩĩ", "boy", "mvulana", "high"],
+                ["kairĩtu", "girl", "msichana", "high"],
+                ["andũ", "people", "watu", "high"],
+            ]),
+        ]),
+        unit("kik-u7", U.nature, "Nanyuki", TEAL, [
+            lesson("kik-u7-l1", U.animals, [
+                ["mbũri", "goat", "mbuzi", "high"], ["ngũkũ", "chicken", "kuku", "high"],
+                ["ngui", "dog", "mbwa", "high"], ["nyau", "cat", "paka", "medium"],
+                ["njogu", "elephant", "tembo", "high"], ["mũrũthi", "lion", "simba", "high"],
+                ["nyoni", "bird", "ndege", "high"],
+            ]),
+            lesson("kik-u7-l2", U.land, [
+                ["mbura", "rain", "mvua", "high"], ["riũa", "sun", "jua", "high"],
+                ["mwaki", "fire", "moto", "high"], ["mũtĩ", "tree", "mti", "high"],
+                ["rũũĩ", "river", "mto", "high"],
+                ["kĩrĩma", "hill / mountain", "mlima", "high", "Mount Kenya is Kĩrĩnyaga."],
+            ]),
+        ]),
+        unit("kik-u8", U.body, "Karatina", BLACK, [
+            lesson("kik-u8-l1", U.bodyParts, [
+                ["mũtwe", "head", "kichwa", "high"], ["maitho", "eyes", "macho", "high"],
+                ["kanua", "mouth", "mdomo", "high"], ["guoko", "hand / arm", "mkono", "high"],
+                ["kũgũrũ", "leg / foot", "mguu", "high"], ["matũ", "ears", "masikio", "high"],
+                ["nyũũru", "nose", "pua", "medium"],
             ]),
         ]),
     ],
@@ -192,6 +241,43 @@ const luo = {
                 ["nyoro", "yesterday", "jana", "high"], ["Bi ka", "Come here", "Njoo hapa", "medium"],
             ]),
         ]),
+        unit("luo-u6", U.family, "Bondo", PURPLE, [
+            lesson("luo-u6-l1", U.relatives, [
+                ["dani", "grandmother", "bibi", "high"],
+                ["kwaro", "my grandfather", "babu yangu", "high"],
+                ["owadwa", "my brother", "kaka yangu", "high"],
+                ["nyamera", "my sister", "dada yangu", "high"],
+                ["Ma en ng'a?", "Who is this?", "Huyu ni nani?", "medium"],
+                ["Ma en kwara", "This is my grandfather", "Huyu ni babu yangu", "medium"],
+            ], scene(S.photos, ["friend", "luo-u6-l1-5"], ["you", "luo-u6-l1-6"])),
+            lesson("luo-u6-l2", U.menWomen, [
+                ["dhako", "woman", "mwanamke", "high"], ["dichwo", "man", "mwanamume", "high"],
+                ["wuowi", "boy", "mvulana", "high"], ["nyako", "girl", "msichana", "high"],
+                ["ji", "people", "watu", "medium"],
+            ]),
+        ]),
+        unit("luo-u7", U.nature, "Kendu Bay", TEAL, [
+            lesson("luo-u7-l1", U.animals, [
+                ["diel", "goat", "mbuzi", "high"], ["gweno", "chicken", "kuku", "high"],
+                ["guok", "dog", "mbwa", "high"], ["paka", "cat", "paka", "high"],
+                ["liech", "elephant", "tembo", "high"], ["sibuor", "lion", "simba", "high"],
+                ["winyo", "bird", "ndege", "high"],
+            ]),
+            lesson("luo-u7-l2", U.land, [
+                ["koth", "rain", "mvua", "high"], ["chieng'", "sun / day", "jua / siku", "high"],
+                ["mach", "fire", "moto", "high"], ["yath", "tree", "mti", "high"],
+                ["aora", "river", "mto", "high"], ["got", "hill / mountain", "mlima", "high"],
+                ["nam", "lake", "ziwa", "high", "Lake Victoria is Nam Lolwe."],
+            ]),
+        ]),
+        unit("luo-u8", U.body, "Ahero", BLACK, [
+            lesson("luo-u8-l1", U.bodyParts, [
+                ["wich", "head", "kichwa", "high"], ["wang'", "eye", "jicho", "high"],
+                ["dhok", "mouth", "mdomo", "high"], ["lwedo", "hand", "mkono", "high"],
+                ["tiendo", "leg / foot", "mguu", "high"], ["it", "ear", "sikio", "high"],
+                ["um", "nose", "pua", "high"],
+            ]),
+        ]),
     ],
 };
 // ───────────────────────── Kĩkamba ─────────────────────────
@@ -242,6 +328,32 @@ const kamba = {
                 ["Ũka vaa", "Come here", "Njoo hapa", "medium"],
             ]),
         ]),
+        unit("kam-u6", U.family, "Kangundo", PURPLE, [
+            lesson("kam-u6-l1", U.menWomen, [
+                ["susu", "grandmother", "bibi", "medium"], ["umau", "grandfather", "babu", "medium"],
+                ["mũndũ mũka", "woman", "mwanamke", "medium"], ["mũndũ mũũme", "man", "mwanamume", "medium"],
+                ["kavĩsĩ", "boy", "mvulana", "medium"], ["kelĩtu", "girl", "msichana", "medium"],
+            ]),
+        ]),
+        unit("kam-u7", U.nature, "Tala", TEAL, [
+            lesson("kam-u7-l1", U.animals, [
+                ["mbũi", "goat", "mbuzi", "high"], ["ngũkũ", "chicken", "kuku", "high"],
+                ["ngitĩ", "dog", "mbwa", "high"], ["nzou", "elephant", "tembo", "high"],
+                ["mũnyambũ", "lion", "simba", "medium"], ["nyũnyi", "bird", "ndege", "medium"],
+            ]),
+            lesson("kam-u7-l2", U.land, [
+                ["mbua", "rain", "mvua", "high"], ["syũa", "sun", "jua", "high"],
+                ["mwaki", "fire", "moto", "high"], ["mũtĩ", "tree", "mti", "high"],
+                ["ũsĩ", "river", "mto", "high"], ["kĩĩma", "hill", "kilima", "medium"],
+            ]),
+        ]),
+        unit("kam-u8", U.body, "Wote", BLACK, [
+            lesson("kam-u8-l1", U.bodyParts, [
+                ["mũtwe", "head", "kichwa", "high"], ["metho", "eyes", "macho", "high"],
+                ["kanywa", "mouth", "mdomo", "medium"], ["kwoko", "hand / arm", "mkono", "medium"],
+                ["kũũ", "leg / foot", "mguu", "medium"], ["matũ", "ears", "masikio", "medium"],
+            ]),
+        ]),
     ],
 };
 // ───────────────────────── Kalenjin ─────────────────────────
@@ -284,6 +396,32 @@ const kalenjinGeneral = {
                 ["mutai", "tomorrow", "kesho", "medium"],
                 ["Nyoo", "Come", "Njoo", "medium"],
             ], scene(S.stage, ["conductor", "kln-u5-l1-1"], ["you", "kln-u5-l1-2"])),
+        ]),
+        unit("kln-u6", U.family, "Kabarnet", PURPLE, [
+            lesson("kln-u6-l1", U.relatives, [
+                ["kogo", "grandmother", "bibi", "high"], ["kugo", "grandfather", "babu", "medium"],
+                ["kamet", "mother", "mama", "high"], ["korgo", "woman / wife", "mwanamke / mke", "medium"],
+                ["chepto", "girl", "msichana", "medium"], ["werit", "boy", "mvulana", "medium"],
+            ]),
+        ]),
+        unit("kln-u7", U.nature, "Eldama Ravine", TEAL, [
+            lesson("kln-u7-l1", U.animals, [
+                ["artet", "goat", "mbuzi", "medium"], ["ingokiet", "chicken", "kuku", "medium"],
+                ["ngetundo", "lion", "simba", "medium"], ["beliot", "elephant", "tembo", "medium"],
+                ["tarit", "bird", "ndege", "medium"],
+            ]),
+            lesson("kln-u7-l2", U.land, [
+                ["asista", "sun", "jua", "high"], ["arawet", "moon / month", "mwezi", "high"],
+                ["ketit", "tree", "mti", "medium"], ["tulwet", "hill / mountain", "mlima", "medium"],
+                ["maat", "fire", "moto", "medium"], ["robta", "rain", "mvua", "low"],
+            ]),
+        ]),
+        unit("kln-u8", U.body, "Kaptagat", BLACK, [
+            lesson("kln-u8-l1", U.bodyParts, [
+                ["metit", "head", "kichwa", "medium"], ["konda", "eye", "jicho", "medium"],
+                ["kutit", "mouth", "mdomo", "medium"], ["eunet", "hand", "mkono", "medium"],
+                ["kelda", "leg / foot", "mguu", "low"],
+            ]),
         ]),
     ],
 };
@@ -362,6 +500,23 @@ const luhyaGeneral = {
             lesson("luy-u4-l1", U.food, [
                 ["obusuma", "ugali", "ugali", "high"], ["amabere", "milk", "maziwa", "medium"],
                 ["enyama", "meat", "nyama", "medium"], ["tsisendi", "money", "pesa", "low", "Varies by dialect."],
+            ]),
+        ]),
+        unit("luy-u5", U.family, "Butere", PURPLE, [
+            lesson("luy-u5-l1", U.menWomen, [
+                ["guku", "grandparent", "babu / bibi", "medium"], ["mayi", "mother", "mama", "medium"],
+                ["omukhasi", "woman / wife", "mwanamke / mke", "medium"], ["omusatsa", "man / husband", "mwanamume / mume", "medium"],
+                ["omusiani", "boy", "mvulana", "medium"], ["omukhana", "girl", "msichana", "medium"],
+            ]),
+        ]),
+        unit("luy-u6", U.nature, "Malava", TEAL, [
+            lesson("luy-u6-l1", U.animals, [
+                ["imbusi", "goat", "mbuzi", "medium"], ["ingokho", "chicken", "kuku", "medium"],
+                ["imbwa", "dog", "mbwa", "medium"], ["inzofu", "elephant", "tembo", "low"],
+            ]),
+            lesson("luy-u6-l2", U.land, [
+                ["ifula", "rain", "mvua", "medium"], ["lijuba", "sun", "jua", "medium"],
+                ["omuliro", "fire", "moto", "medium"], ["omusala", "tree", "mti", "medium"],
             ]),
         ]),
     ],
