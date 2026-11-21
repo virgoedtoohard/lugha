@@ -59,7 +59,7 @@ async function speakIn(el, item, text, voice) {
     await audio.play(item, code(), false, voice, text);
     bubbleEl?.classList.remove("speaking");
 }
-const speakerBtn = (it, id = "speak") => audio.hasAudio(it, code()) ? `<button class="speak" id="${id}" aria-label="${t("playSound")}" title="${audio.sourceFor(it, code()) === "approx" ? t("approxNote") : t("playSound")}">🔊</button>` : "";
+const speakerBtn = (it, id = "speak") => audio.hasAudio(it, code()) ? `<button class="speak" id="${id}" aria-label="${t("playSound")}" title="${t("playSound")}">🔊</button>` : "";
 function draftChip(items) {
     const drafts = items.filter((i) => i.status === "draft");
     if (!drafts.length)
@@ -90,7 +90,7 @@ function shell(inner, items, canSpeakAnswer = false) {
       ${right}
     </header>
     <main class="lesson-body">
-      <div class="chips">${draftChip(items)}${approxChip(items)}</div>
+
       ${inner}
       ${micOffer}
       <div id="spoken" class="spoken" hidden></div>

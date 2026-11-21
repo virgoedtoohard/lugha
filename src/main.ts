@@ -129,7 +129,6 @@ function renderCourses(root: HTMLElement): void {
         </div>`;
       }).join("")}
     </div>
-    <p class="muted small">${t("draftsNote")}</p>
   </section>`;
   wireBaseToggle();
   $$<HTMLButtonElement>("[data-code]").forEach((b) => b.addEventListener("click", () => {

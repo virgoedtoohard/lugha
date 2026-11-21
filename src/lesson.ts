@@ -90,7 +90,7 @@ async function speakIn(el: Element | null, item: Item | undefined, text: string,
   bubbleEl?.classList.remove("speaking");
 }
 const speakerBtn = (it: Item, id = "speak") =>
-  audio.hasAudio(it, code()) ? `<button class="speak" id="${id}" aria-label="${t("playSound")}" title="${audio.sourceFor(it, code()) === "approx" ? t("approxNote") : t("playSound")}">🔊</button>` : "";
+  audio.hasAudio(it, code()) ? `<button class="speak" id="${id}" aria-label="${t("playSound")}" title="${t("playSound")}">🔊</button>` : "";
 
 function draftChip(items: Item[]): string {
   const drafts = items.filter((i) => i.status === "draft");
@@ -125,7 +125,7 @@ function shell(inner: string, items: Item[], canSpeakAnswer = false): string {
       ${right}
     </header>
     <main class="lesson-body">
-      <div class="chips">${draftChip(items)}${approxChip(items)}</div>
+
       ${inner}
       ${micOffer}
       <div id="spoken" class="spoken" hidden></div>
